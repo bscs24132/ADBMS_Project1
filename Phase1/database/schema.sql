@@ -250,3 +250,13 @@ begin
 end$$
 
 delimiter ;
+
+CREATE TABLE coin_purchases (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    coins_purchased INT NOT NULL,
+    account_no VARCHAR(20) NOT NULL,
+    amount_paid DECIMAL(10, 2) NOT NULL,
+    purchased_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

@@ -8,8 +8,83 @@ from django.db import connection
 from django.contrib.auth.hashers import check_password, make_password
 from .models import User
 from .serializers import UserProfileSerializer, RegisterSerializer
-
-
+from django.db import transaction
+class BuyCoinsView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        # Get data from request
+        coins = request.data.get('coins')
+        account_no = request.data.get('account_no')
+        amount = request.data.get('amount')
+        
+        # Validation
+        if not coins or not account_no or not amount:
+            return Response(
+                {'error': 'coins, account_no, and amount are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            coins = int(coins)
+            amount = float(amount)
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'coins must be integer, amount must be number'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if coins <= 0 or amount <= 0:
+            return Response(
+                {'error': 'coins and amount must be positive'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if len(account_no) < 5:
+            return Response(
+                {'error': 'account_no must be at least 5 characters'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    # 1. Record the coin purchase
+                    cursor.execute("""
+                        INSERT INTO coin_purchases 
+                        (user_id, coins_purchased, account_no, amount_paid, purchased_at)
+                        VALUES (%s, %s, %s, %s, NOW())
+                    """, [request.user.id, coins, account_no, amount])
+                    
+                    purchase_id = cursor.lastrowid
+                    
+                    # 2. Add coins to wallet
+                    cursor.execute("""
+                        UPDATE wallets 
+                        SET coin_balance = coin_balance + %s, updated_at = NOW()
+                        WHERE user_id = %s
+                    """, [coins, request.user.id])
+                    
+                    # 3. Get updated balance
+                    cursor.execute("""
+                        SELECT coin_balance FROM wallets WHERE user_id = %s
+                    """, [request.user.id])
+                    new_balance = cursor.fetchone()[0]
+                
+                return Response({
+                    'message': 'Coins purchased successfully',
+                    'purchase_id': purchase_id,
+                    'coins_added': coins,
+                    'amount_paid': amount,
+                    'account_no': account_no[-4:].rjust(len(account_no), '*'),  # Show only last 4 digits
+                    'new_balance': new_balance
+                }, status=status.HTTP_201_CREATED)
+                
+        except Exception as e:
+            return Response(
+                {'error': f'Purchase failed: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
