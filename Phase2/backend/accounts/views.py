@@ -76,7 +76,7 @@ class BuyCoinsView(APIView):
                     'purchase_id': purchase_id,
                     'coins_added': coins,
                     'amount_paid': amount,
-                    'account_no': account_no[-4:].rjust(len(account_no), '*'),  # Show only last 4 digits
+                    'account_no': account_no[-4:].rjust(len(account_no), '*'),
                     'new_balance': new_balance
                 }, status=status.HTTP_201_CREATED)
                 
@@ -85,6 +85,7 @@ class BuyCoinsView(APIView):
                 {'error': f'Purchase failed: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -166,20 +167,36 @@ class LoginView(APIView):
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
-
+    
     def post(self, request):
-        refresh_token = request.data.get('refresh')
-
-        if not refresh_token:
-            return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
-
         try:
+            refresh_token = request.data.get('refresh')
+            
+            if not refresh_token:
+                return Response(
+                    {'error': 'Refresh token is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Blacklist the refresh token
             token = RefreshToken(refresh_token)
             token.blacklist()
-            return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
+            
+            return Response(
+                {'message': 'Successfully logged out'},
+                status=status.HTTP_200_OK
+            )
+            
         except TokenError:
-            return Response({'error': 'Invalid or expired token'}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response(
+                {'error': 'Invalid or expired token'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Logout failed: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]

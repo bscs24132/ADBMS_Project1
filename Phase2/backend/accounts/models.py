@@ -199,3 +199,14 @@ class UserBookAccess(models.Model):
         db_table = 'user_book_access'
         managed = False
         unique_together = (('user_id', 'book_id'),)
+
+class CoinPurchase(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
+    coins_purchased = models.IntegerField()
+    account_no = models.CharField(max_length=20)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
+    purchased_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'coin_purchases'
+        managed = False

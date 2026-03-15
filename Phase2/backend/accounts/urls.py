@@ -23,7 +23,7 @@ urlpatterns = [
     # Auth
     path('auth/register', views.RegisterView.as_view(), name='register'),
     path('auth/login', views.LoginView.as_view(), name='login'),
-    path('auth/logout', views.LogoutView.as_view(), name='logout'),
+    path('auth/logout/', views.LogoutView.as_view(), name='logout'),  # Added trailing slash
     path('auth/forgot-password', views.ForgotPasswordView.as_view(), name='forgot-password'),
     path('auth/reset-password', views.ResetPasswordView.as_view(), name='reset-password'),
 
@@ -39,6 +39,7 @@ urlpatterns = [
 
     # Wallet System
     path('wallet', views.WalletView.as_view(), name='wallet'),
+    path('wallet/buy-coins/', views.BuyCoinsView.as_view(), name='buy-coins'),
     path('wallet/transactions', views.WalletTransactionsView.as_view(), name='wallet-transactions'),
     path('admin/wallet/add/<int:user_id>', views.AdminAddCoinsView.as_view(), name='admin-add-coins'),
 
@@ -49,6 +50,4 @@ urlpatterns = [
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-
-    path('wallet/buy-coins/', views.BuyCoinsView.as_view(), name='buy-coins'),
 ]
