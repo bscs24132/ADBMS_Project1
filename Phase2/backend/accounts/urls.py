@@ -5,6 +5,7 @@ from drf_yasg import openapi
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import permissions
+from rest_framework_simplejwt.views import TokenRefreshView
 # Schema view configuration
 schema_view = get_schema_view(
     openapi.Info(
@@ -26,6 +27,7 @@ urlpatterns = [
     path('auth/logout/', views.LogoutView.as_view(), name='logout'),  # Added trailing slash
     path('auth/forgot-password', views.ForgotPasswordView.as_view(), name='forgot-password'),
     path('auth/reset-password', views.ResetPasswordView.as_view(), name='reset-password'),
+    path('auth/refresh', TokenRefreshView.as_view(), name='token_refresh'),
 
     # Profile
     path('users/profile', views.ProfileView.as_view(), name='profile'),
