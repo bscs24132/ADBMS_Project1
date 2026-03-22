@@ -13,7 +13,7 @@ const Footer = () => {
         >
             <Container maxWidth="lg">
                 <Typography variant="body2" color="text.secondary" align="center">
-                    © 2024 BookVerse - Readers & Writers Platform
+                    © 2024 InkVio - Readers & Writers Platform
                 </Typography>
             </Container>
         </Box>

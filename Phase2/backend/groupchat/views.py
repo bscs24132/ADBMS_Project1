@@ -4,7 +4,33 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from django.db import connection
 
-
+class GroupChatListView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        writer_id = request.GET.get('writer_id')
+        
+        with connection.cursor() as cursor:
+            if writer_id:
+                cursor.execute("""
+                    SELECT g.id, g.name, g.created_by, g.writer_id, g.created_at,
+                           (SELECT COUNT(*) FROM members WHERE group_id = g.id) as member_count
+                    FROM groupchats g
+                    WHERE g.writer_id = %s
+                    ORDER BY g.created_at DESC
+                """, [writer_id])
+            else:
+                cursor.execute("""
+                    SELECT g.id, g.name, g.created_by, g.writer_id, g.created_at,
+                           (SELECT COUNT(*) FROM members WHERE group_id = g.id) as member_count
+                    FROM groupchats g
+                    ORDER BY g.created_at DESC
+                """)
+            
+            columns = [col[0] for col in cursor.description]
+            groups = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        
+        return Response(groups)
 class CreateGroupView(APIView):
     permission_classes = [IsAuthenticated]
 
