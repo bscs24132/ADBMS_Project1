@@ -1,5 +1,8 @@
 import React from 'react';
+import SearchIcon from '@mui/icons-material/Search';
 import { useNavigate } from 'react-router-dom';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import GroupIcon from '@mui/icons-material/Group';
 import {
     AppBar,
     Toolbar,
@@ -34,7 +37,16 @@ const Header = () => {
                 <IconButton edge="start" color="inherit" sx={{ mr: 2 }}>
                     <MenuIcon />
                 </IconButton>
-                
+                <IconButton color="inherit" onClick={() => navigate('/search')}>
+    <SearchIcon />
+</IconButton>
+<IconButton color="inherit" onClick={() => navigate('/wallet')}>
+    <AccountBalanceWalletIcon />
+</IconButton>
+<Button color="inherit" onClick={() => navigate('/groups')}>
+    <GroupIcon sx={{ mr: 0.5 }} />
+    Groups
+</Button>
                 <Typography variant="h6" sx={{ flexGrow: 1, cursor: 'pointer' }} onClick={() => navigate('/')}>
                     ✍️ InkVio
                 </Typography>
@@ -44,7 +56,7 @@ const Header = () => {
                         <Button color="inherit" onClick={() => navigate('/dashboard')}>
                             Feed
                         </Button>
-                        <Button color="inherit" onClick={() => navigate('/books')}>
+                        <Button color="inherit" onClick={() => navigate('/my-books')}>
                             Books
                         </Button>
                         

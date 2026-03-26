@@ -563,3 +563,21 @@ class CreateNotebookPostView(APIView):
                 {'error': f'Failed to create writing: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+class NotebookPostsView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, notebook_id):
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT p.id, p.notebook_id, p.author_id, p.content, p.image, p.created_at,
+                       u.username as author_name, u.profile_picture
+                FROM posts p
+                JOIN users u ON p.author_id = u.id
+                WHERE p.notebook_id = %s
+                ORDER BY p.created_at ASC
+            """, [notebook_id])
+            
+            columns = [col[0] for col in cursor.description]
+            posts = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        
+        return Response(posts)

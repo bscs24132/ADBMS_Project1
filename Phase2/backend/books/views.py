@@ -11,18 +11,40 @@ class BookListView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request):
+        search_query = request.GET.get('search', '')
+        
         with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT b.id, b.title, b.description, b.author_id,
-                       u.username as author_username, b.coin_price,
-                       b.cover_image, b.is_approved, b.created_at
-                FROM books b
-                JOIN users u ON b.author_id = u.id
-                WHERE b.is_approved = 1
-                ORDER BY b.created_at DESC
-            """)
+            if search_query:
+                # Search by title (case-insensitive)
+                cursor.execute("""
+                    SELECT b.id, b.title, b.description, b.author_id,
+                           u.username as author_username, b.coin_price,
+                           b.cover_image, b.is_approved, b.created_at
+                    FROM books b
+                    JOIN users u ON b.author_id = u.id
+                    WHERE b.is_approved = 1 AND b.title LIKE %s
+                    ORDER BY 
+                        CASE 
+                            WHEN b.title LIKE %s THEN 1
+                            WHEN b.title LIKE %s THEN 2
+                            ELSE 3
+                        END,
+                        b.created_at DESC
+                """, [f'%{search_query}%', f'{search_query}%', f'%{search_query}%'])
+            else:
+                cursor.execute("""
+                    SELECT b.id, b.title, b.description, b.author_id,
+                           u.username as author_username, b.coin_price,
+                           b.cover_image, b.is_approved, b.created_at
+                    FROM books b
+                    JOIN users u ON b.author_id = u.id
+                    WHERE b.is_approved = 1
+                    ORDER BY b.created_at DESC
+                """)
+            
             columns = [col[0] for col in cursor.description]
             books = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        
         return Response(books)
 
     def post(self, request):

@@ -9,6 +9,55 @@ from django.contrib.auth.hashers import check_password, make_password
 from .models import User
 from .serializers import UserProfileSerializer, RegisterSerializer
 from django.db import transaction
+class UserSearchView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        search_query = request.GET.get('search', '')
+        
+        with connection.cursor() as cursor:
+            if search_query:
+                cursor.execute("""
+                    SELECT id, username, bio, profile_picture, role, date_joined
+                    FROM users 
+                    WHERE username LIKE %s
+                    ORDER BY 
+                        CASE 
+                            WHEN username = %s THEN 1
+                            WHEN username LIKE %s THEN 2
+                            ELSE 3
+                        END,
+                        username ASC
+                    LIMIT 50
+                """, [f'%{search_query}%', search_query, f'{search_query}%'])
+            else:
+                cursor.execute("""
+                    SELECT id, username, bio, profile_picture, role, date_joined
+                    FROM users 
+                    ORDER BY username ASC
+                    LIMIT 50
+                """)
+            
+            columns = [col[0] for col in cursor.description]
+            users = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        
+        return Response(users)
+class CoinPurchasesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT id, coins_purchased, account_no, amount_paid, purchased_at
+                FROM coin_purchases
+                WHERE user_id = %s
+                ORDER BY purchased_at DESC
+            """, [request.user.id])
+            
+            columns = [col[0] for col in cursor.description]
+            purchases = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        
+        return Response(purchases)
 class BuyCoinsView(APIView):
     permission_classes = [IsAuthenticated]
     
@@ -200,17 +249,21 @@ class LogoutView(APIView):
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        serializer = UserProfileSerializer(request.user)
-        return Response(serializer.data)
-
+    
     def put(self, request):
-        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user = request.user
+        data = request.data
+        
+        # Update allowed fields
+        if 'bio' in data:
+            user.bio = data['bio']
+        if 'profile_picture' in data:
+            user.profile_picture = data['profile_picture']
+        
+        user.save()
+        
+        serializer = UserProfileSerializer(user)
+        return Response(serializer.data)
 
 
 class PublicProfileView(APIView):
@@ -353,23 +406,21 @@ class WalletView(APIView):
 
 class WalletTransactionsView(APIView):
     permission_classes = [IsAuthenticated]
-
+    
     def get(self, request):
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT t.book_id, b.title, b.cover_image, t.coins_spent, t.purchased_at,
-                       u.username as author_name
+                SELECT t.*, b.title as book_title
                 FROM transactions t
                 JOIN books b ON t.book_id = b.id
-                JOIN users u ON b.author_id = u.id
                 WHERE t.user_id = %s
                 ORDER BY t.purchased_at DESC
             """, [request.user.id])
-
+            
             columns = [col[0] for col in cursor.description]
             transactions = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-        return Response({'transactions': transactions})
+        
+        return Response(transactions)
 
 
 class AdminAddCoinsView(APIView):

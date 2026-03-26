@@ -1,34 +1,23 @@
-import React from 'react';
-import { Container, Typography, Box, Button } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Container } from '@mui/material';
 import Layout from '../../components/Layout/Layout';
 import PostsFeed from '../../components/Post/PostsFeed';
-import { useAuth } from '../../context/AuthContext';
 
 const UserDashboard = () => {
-    const { user } = useAuth();
-    const navigate = useNavigate();
+    useEffect(() => {
+        const savedPosition = sessionStorage.getItem('feedScrollPosition');
+        if (savedPosition) {
+            // Small delay to ensure content is loaded
+            setTimeout(() => {
+                window.scrollTo(0, parseInt(savedPosition));
+                sessionStorage.removeItem('feedScrollPosition');
+            }, 100);
+        }
+    }, []);
 
     return (
         <Layout>
             <Container maxWidth="md">
-                <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                        <Typography variant="h4" gutterBottom>
-                            Welcome back, {user?.username}! 📖
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary">
-                            Here's what's happening in your feed
-                        </Typography>
-                    </Box>
-                    <Button 
-                        variant="outlined" 
-                        onClick={() => navigate('/profile')}
-                    >
-                        View Profile
-                    </Button>
-                </Box>
-                
                 <PostsFeed />
             </Container>
         </Layout>

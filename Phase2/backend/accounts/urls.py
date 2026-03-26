@@ -30,8 +30,8 @@ urlpatterns = [
     path('auth/refresh', TokenRefreshView.as_view(), name='token_refresh'),
 
     # Profile
-    path('users/profile', views.ProfileView.as_view(), name='profile'),
     path('users/<int:user_id>', views.PublicProfileView.as_view(), name='public-profile'),
+    path('users/profile', views.ProfileView.as_view(), name='profile'),
 
     # Follow System
     path('users/<int:user_id>/follow', views.FollowToggleView.as_view(), name='follow-toggle'),
@@ -52,4 +52,6 @@ urlpatterns = [
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+path('wallet/coin-purchases', views.CoinPurchasesView.as_view(), name='coin-purchases'),
+    path('users/search/', views.UserSearchView.as_view(), name='user-search'),
 ]
