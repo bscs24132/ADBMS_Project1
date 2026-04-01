@@ -32,86 +32,65 @@ export const AuthProvider = ({ children }) => {
     };
 
     const login = async (credentials) => {
-    setError(null);
-    try {
-        const response = await api.post('/auth/login', credentials);
-        localStorage.setItem('access_token', response.data.access);
-        localStorage.setItem('refresh_token', response.data.refresh);
-        setUser(response.data.user);
-        return { success: true };
-    } catch (err) {
-        let errorMsg = err.response?.data?.error || 'Invalid credentials';
-        setError(errorMsg);
-        return { success: false, error: errorMsg };
-    }
-};
+        setError(null);
+        try {
+            const response = await api.post('/auth/login', credentials);
+            localStorage.setItem('access_token', response.data.access);
+            localStorage.setItem('refresh_token', response.data.refresh);
+            setUser(response.data.user);
+            // Return role so Login.jsx can redirect without waiting for state update
+            return { success: true, role: response.data.user?.role };
+        } catch (err) {
+            let errorMsg = err.response?.data?.error || 'Invalid credentials';
+            setError(errorMsg);
+            return { success: false, error: errorMsg };
+        }
+    };
 
     const register = async (userData) => {
-    setError(null);
-    try {
-        const response = await api.post('/auth/register', userData);
-        localStorage.setItem('access_token', response.data.access);
-        localStorage.setItem('refresh_token', response.data.refresh);
-        setUser(response.data.user);
-        return { success: true };
-    } catch (err) {
-        console.log('Full error object:', err);
-        console.log('Error response:', err.response);
-        console.log('Error data:', err.response?.data);
-        
-        // Extract detailed error message from backend
-        let errorMsg = 'Registration failed. Please check your information.';
-        
-        if (err.response?.data) {
-            const data = err.response.data;
-            
-            // Handle different error formats from Django
-            if (typeof data === 'string') {
-                errorMsg = data;
-            } 
-            // Handle username error
-            else if (data.username) {
-                const usernameErrors = Array.isArray(data.username) ? data.username.join(', ') : data.username;
-                errorMsg = `❌ Username: ${usernameErrors}`;
-            }
-            // Handle email error
-            else if (data.email) {
-                const emailErrors = Array.isArray(data.email) ? data.email.join(', ') : data.email;
-                errorMsg = `❌ Email: ${emailErrors}`;
-            }
-            // Handle password error
-            else if (data.password) {
-                const passwordErrors = Array.isArray(data.password) ? data.password.join(', ') : data.password;
-                errorMsg = `❌ Password: ${passwordErrors}`;
-            }
-            // Handle non-field error
-            else if (data.non_field_errors) {
-                errorMsg = data.non_field_errors.join(', ');
-            }
-            // Handle error field
-            else if (data.error) {
-                errorMsg = data.error;
-            }
-            // Handle detail field (DRF format)
-            else if (data.detail) {
-                errorMsg = data.detail;
-            }
-            // Try to get first error message
-            else {
-                const firstKey = Object.keys(data)[0];
-                if (firstKey && data[firstKey]) {
-                    errorMsg = `❌ ${firstKey}: ${data[firstKey]}`;
+        setError(null);
+        try {
+            const response = await api.post('/auth/register', userData);
+            localStorage.setItem('access_token', response.data.access);
+            localStorage.setItem('refresh_token', response.data.refresh);
+            setUser(response.data.user);
+            return { success: true, role: response.data.user?.role };
+        } catch (err) {
+            let errorMsg = 'Registration failed. Please check your information.';
+
+            if (err.response?.data) {
+                const data = err.response.data;
+                if (typeof data === 'string') {
+                    errorMsg = data;
+                } else if (data.username) {
+                    const usernameErrors = Array.isArray(data.username) ? data.username.join(', ') : data.username;
+                    errorMsg = `❌ Username: ${usernameErrors}`;
+                } else if (data.email) {
+                    const emailErrors = Array.isArray(data.email) ? data.email.join(', ') : data.email;
+                    errorMsg = `❌ Email: ${emailErrors}`;
+                } else if (data.password) {
+                    const passwordErrors = Array.isArray(data.password) ? data.password.join(', ') : data.password;
+                    errorMsg = `❌ Password: ${passwordErrors}`;
+                } else if (data.non_field_errors) {
+                    errorMsg = data.non_field_errors.join(', ');
+                } else if (data.error) {
+                    errorMsg = data.error;
+                } else if (data.detail) {
+                    errorMsg = data.detail;
                 } else {
-                    errorMsg = JSON.stringify(data);
+                    const firstKey = Object.keys(data)[0];
+                    if (firstKey && data[firstKey]) {
+                        errorMsg = `❌ ${firstKey}: ${data[firstKey]}`;
+                    } else {
+                        errorMsg = JSON.stringify(data);
+                    }
                 }
             }
+
+            setError(errorMsg);
+            return { success: false, error: errorMsg };
         }
-        
-        console.log('Final error message:', errorMsg);
-        setError(errorMsg);
-        return { success: false, error: errorMsg };
-    }
-};
+    };
 
     const logout = async () => {
         try {
@@ -135,6 +114,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        setUser,
         setError,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',

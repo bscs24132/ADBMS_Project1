@@ -8,7 +8,7 @@ import {
     Typography,
     Paper,
     Alert,
-    Link as MuiLink,
+    Divider,
 } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import Layout from '../../components/Layout/Layout';
@@ -27,33 +27,37 @@ const Login = () => {
     }, [setError]);
 
     const handleLogin = async () => {
-        console.log("1. Login clicked");
-        
         if (!identifier || !password) {
-            console.log("2. Missing fields");
             if (setError) setError('Please enter username/email and password');
             return;
         }
-        
+
         setLoading(true);
-        
+
         const credentials = {
             [identifier.includes('@') ? 'email' : 'username']: identifier,
-            password
+            password,
         };
-        
-        console.log("3. Sending credentials:", credentials);
-        
+
         const result = await login(credentials);
-        console.log("4. Login result:", result);
-        
+
         if (result.success) {
-            console.log("5. Navigating to dashboard");
-            navigate('/dashboard', { replace: true });
-        } else {
-            console.log("5. Failed - showing error");
+            // Redirect based on role
+            const role = result.user?.role || result.role;
+            if (role === 'admin') {
+                navigate('/admin', { replace: true });
+            } else if (role === 'writer') {
+                navigate('/writer', { replace: true });
+            } else {
+                navigate('/dashboard', { replace: true });
+            }
         }
+
         setLoading(false);
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') handleLogin();
     };
 
     return (
@@ -64,18 +68,19 @@ const Login = () => {
                         <Typography variant="h4" align="center" gutterBottom>
                             Login
                         </Typography>
-                        
+
                         {error && (
                             <Alert severity="error" sx={{ mb: 2 }}>
                                 {error}
                             </Alert>
                         )}
-                        
+
                         <TextField
                             fullWidth
                             label="Username or Email"
                             value={identifier}
                             onChange={(e) => setIdentifier(e.target.value)}
+                            onKeyDown={handleKeyDown}
                             margin="normal"
                         />
                         <TextField
@@ -84,6 +89,7 @@ const Login = () => {
                             label="Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            onKeyDown={handleKeyDown}
                             margin="normal"
                         />
                         <Button
@@ -96,8 +102,23 @@ const Login = () => {
                         >
                             {loading ? 'Logging in...' : 'Login'}
                         </Button>
-                        
+
                         <Box sx={{ mt: 2, textAlign: 'center' }}>
+                            <Link
+                                to="/forgot-password"
+                                style={{
+                                    textDecoration: 'none',
+                                    color: '#6c5ce7',
+                                    fontSize: '0.875rem',
+                                }}
+                            >
+                                Forgot Password?
+                            </Link>
+                        </Box>
+
+                        <Divider sx={{ my: 2 }} />
+
+                        <Box sx={{ textAlign: 'center' }}>
                             <Typography variant="body2">
                                 Don't have an account?{' '}
                                 <Link to="/register" style={{ textDecoration: 'none' }}>

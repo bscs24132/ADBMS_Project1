@@ -1,123 +1,78 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Divider } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, Typography, CircularProgress, Chip, Divider } from '@mui/material';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import PeopleIcon from '@mui/icons-material/People';
 import api from '../../api/axiosConfig';
 import PostCard from './PostCard';
 import LoadingSpinner from '../Common/LoadingSpinner';
 import ErrorMessage from '../Common/ErrorMessage';
 
 const PostsFeed = ({ userId = null }) => {
-    const [followedPosts, setFollowedPosts] = useState([]);
-    const [otherPosts, setOtherPosts] = useState([]);
+    const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
-    const [hasMoreFollowed, setHasMoreFollowed] = useState(true);
-    const [hasMoreOther, setHasMoreOther] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [showingFollowed, setShowingFollowed] = useState(true);
     const [authorCache, setAuthorCache] = useState({});
+    const [totalCount, setTotalCount] = useState(0);
 
-    // Fetch author details by ID
     const fetchAuthorDetails = async (authorId) => {
         if (authorCache[authorId]) return authorCache[authorId];
-        
         try {
             const response = await api.get(`/users/${authorId}`);
             const authorData = {
                 id: authorId,
                 username: response.data.username,
                 profile_picture: response.data.profile_picture,
-                role: response.data.role
+                role: response.data.role,
             };
             setAuthorCache(prev => ({ ...prev, [authorId]: authorData }));
             return authorData;
-        } catch (error) {
-            console.error('Error fetching author:', error);
-            return {
-                id: authorId,
-                username: 'Unknown User',
-                profile_picture: null,
-                role: 'user'
-            };
+        } catch {
+            return { id: authorId, username: 'Unknown User', profile_picture: null, role: 'user' };
         }
     };
 
-    // Enrich posts with author details
     const enrichPostsWithAuthors = async (posts) => {
-    const enriched = await Promise.all(
-        posts.map(async (post) => {
-            const author = await fetchAuthorDetails(post.author_id);
-            return {
-                ...post,  // This preserves all original fields including like_count and comment_count
-                author: author,
-                author_name: author.username,
-                profile_picture: author.profile_picture
-            };
-        })
-    );
-    return enriched;
-};
+        return Promise.all(
+            posts.map(async (post) => {
+                const author = await fetchAuthorDetails(post.author_id);
+                return {
+                    ...post,
+                    author,
+                    author_name: author.username,
+                    profile_picture: author.profile_picture,
+                };
+            })
+        );
+    };
 
-    useEffect(() => {
-        fetchPosts();
-    }, [page, userId]);
-
-    const fetchPosts = async () => {
+    const fetchPosts = useCallback(async (pageNum = 1) => {
         try {
-            const token = localStorage.getItem('access_token');
-            
-            // If userId is provided (profile page), fetch only that user's posts
+            let data = [];
+
             if (userId) {
-                const response = await api.get(`/users/${userId}/posts?page=${page}&page_size=10`);
-                let data = response.data.results || response.data;
-                
-                // Enrich with author details
-                const enrichedPosts = await enrichPostsWithAuthors(data);
-                
-                if (page === 1) {
-                    setOtherPosts(enrichedPosts);
-                } else {
-                    setOtherPosts(prev => [...prev, ...enrichedPosts]);
-                }
-                setHasMoreOther(data.length === 10);
-                setLoading(false);
-                setLoadingMore(false);
-                return;
-            }
-            
-            // Normal feed for dashboard
-            if (token) {
-                // Fetch followed users' posts
-                const followedResponse = await api.get(`/posts/feed/following?page=${page}&page_size=10`);
-                let followedData = followedResponse.data.results || followedResponse.data;
-                const enrichedFollowed = await enrichPostsWithAuthors(followedData);
-                
-                if (page === 1) {
-                    setFollowedPosts(enrichedFollowed);
-                } else {
-                    setFollowedPosts(prev => [...prev, ...enrichedFollowed]);
-                }
-                setHasMoreFollowed(followedData.length === 10);
-                
-                // Fetch posts from other writers
-                const otherResponse = await api.get(`/posts?page=${page}&page_size=10&exclude_followed=true`);
-                let otherData = otherResponse.data.results || otherResponse.data;
-                const enrichedOther = await enrichPostsWithAuthors(otherData);
-                
-                if (page === 1) {
-                    setOtherPosts(enrichedOther);
-                } else {
-                    setOtherPosts(prev => [...prev, ...enrichedOther]);
-                }
-                setHasMoreOther(otherData.length === 10);
+                // Profile page — specific user's posts
+                const res = await api.get(`/users/${userId}/posts?page=${pageNum}&page_size=10`);
+                data = res.data.results || res.data;
+                setTotalCount(res.data.count || data.length);
             } else {
-                // Guest user
-                const response = await api.get(`/posts?page=${page}&page_size=10`);
-                let data = response.data.results || response.data;
-                const enrichedPosts = await enrichPostsWithAuthors(data);
-                setOtherPosts(enrichedPosts);
-                setHasMoreOther(data.length === 10);
+                // Dashboard — following feed only, no For You
+                const res = await api.get(`/posts/feed/following?page=${pageNum}&page_size=10`);
+                data = res.data.results || res.data;
+                setTotalCount(res.data.count || data.length);
             }
+
+            const enriched = await enrichPostsWithAuthors(data);
+
+            if (pageNum === 1) {
+                setPosts(enriched);
+            } else {
+                setPosts(prev => [...prev, ...enriched]);
+            }
+
+            setHasMore(data.length === 10);
         } catch (err) {
             console.error('Feed error:', err);
             setError('Failed to load posts');
@@ -125,153 +80,155 @@ const PostsFeed = ({ userId = null }) => {
             setLoading(false);
             setLoadingMore(false);
         }
-    };
+    }, [userId]);
 
-    const loadMore = () => {
-        if (userId) {
-            if (hasMoreOther && !loadingMore) {
-                setLoadingMore(true);
-                setPage(prev => prev + 1);
-            }
-        } else if (showingFollowed && hasMoreFollowed && !loadingMore) {
+    useEffect(() => {
+        setLoading(true);
+        setPosts([]);
+        setPage(1);
+        setHasMore(true);
+        fetchPosts(1);
+    }, [userId, fetchPosts]);
+
+    useEffect(() => {
+        if (page > 1) {
             setLoadingMore(true);
-            setPage(prev => prev + 1);
-        } else if (!showingFollowed && hasMoreOther && !loadingMore) {
-            setLoadingMore(true);
-            setPage(prev => prev + 1);
+            fetchPosts(page);
         }
-    };
+    }, [page]);
 
     // Infinite scroll
     useEffect(() => {
         const handleScroll = () => {
-            if (window.innerHeight + document.documentElement.scrollTop >= 
-                document.documentElement.offsetHeight - 500) {
-                loadMore();
+            if (
+                window.innerHeight + document.documentElement.scrollTop >=
+                document.documentElement.offsetHeight - 600 &&
+                hasMore && !loadingMore && !loading
+            ) {
+                setPage(prev => prev + 1);
             }
         };
-        
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
-    }, [hasMoreFollowed, hasMoreOther, loadingMore, showingFollowed, userId]);
+    }, [hasMore, loadingMore, loading]);
 
     if (loading && page === 1) return <LoadingSpinner />;
     if (error) return <ErrorMessage message={error} />;
 
-    // Profile page view
+    // ── Profile page view ──
     if (userId) {
-        if (otherPosts.length === 0) {
+        if (posts.length === 0) {
             return (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Box sx={{
+                    textAlign: 'center', py: 8,
+                    border: '2px dashed', borderColor: 'divider',
+                    borderRadius: 3,
+                }}>
+                    <AutoStoriesIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
                     <Typography variant="body1" color="text.secondary">
                         No posts yet.
                     </Typography>
                 </Box>
             );
         }
-        
         return (
             <Box>
-                {otherPosts.map(post => (
-                    <PostCard 
-                        key={post.id} 
-                        post={post} 
-                        onLikeUpdate={() => fetchPosts()}
-                    />
+                {posts.map(post => (
+                    <PostCard key={post.id} post={post} onLikeUpdate={() => fetchPosts(1)} />
                 ))}
-                
                 {loadingMore && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                        <CircularProgress />
+                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                        <CircularProgress size={28} />
                     </Box>
                 )}
             </Box>
         );
     }
 
-    // Dashboard view with tabs
-    const token = localStorage.getItem('access_token');
-    const currentPosts = showingFollowed ? followedPosts : otherPosts;
-    const hasMore = showingFollowed ? hasMoreFollowed : hasMoreOther;
-
-    if (!token) {
-        // Guest view
-        return (
-            <Box>
-                {otherPosts.map(post => (
-                    <PostCard 
-                        key={post.id} 
-                        post={post} 
-                        onLikeUpdate={() => fetchPosts()}
-                    />
-                ))}
-                
-                {loadingMore && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                        <CircularProgress />
-                    </Box>
-                )}
-            </Box>
-        );
-    }
-
+    // ── Dashboard feed — Following only ──
     return (
         <Box>
-            {/* Tab Navigation */}
-            <Box sx={{ display: 'flex', gap: 2, mb: 3, borderBottom: 1, borderColor: 'divider' }}>
-                <Typography
-                    variant="h6"
-                    sx={{
-                        cursor: 'pointer',
-                        pb: 1,
-                        borderBottom: showingFollowed ? 2 : 0,
-                        borderColor: 'primary.main',
-                        color: showingFollowed ? 'primary.main' : 'text.secondary',
-                    }}
-                    onClick={() => setShowingFollowed(true)}
-                >
-                    Following ({followedPosts.length})
-                </Typography>
-                <Typography
-                    variant="h6"
-                    sx={{
-                        cursor: 'pointer',
-                        pb: 1,
-                        borderBottom: !showingFollowed ? 2 : 0,
-                        borderColor: 'primary.main',
-                        color: !showingFollowed ? 'primary.main' : 'text.secondary',
-                    }}
-                    onClick={() => setShowingFollowed(false)}
-                >
-                    For You ({otherPosts.length})
-                </Typography>
+            {/* Feed header */}
+            <Box sx={{
+                display: 'flex', alignItems: 'center',
+                justifyContent: 'space-between', mb: 2,
+            }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PeopleIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+                    <Typography variant="subtitle1" fontWeight={700} color="primary.main">
+                        Feed
+                    </Typography>
+                </Box>
+                {posts.length > 0 && (
+                    <Chip
+                        label={`${posts.length} post${posts.length !== 1 ? 's' : ''}`}
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        sx={{ fontSize: 11 }}
+                    />
+                )}
             </Box>
 
-            {/* Posts Display */}
-            {currentPosts.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography variant="body1" color="text.secondary">
-                        {showingFollowed 
-                            ? "You're not following anyone yet! Check out the 'For You' tab to find writers to follow."
-                            : "No posts available. Check back later!"}
+            <Divider sx={{ mb: 3 }} />
+
+            {posts.length === 0 ? (
+                /* Empty state */
+                <Box sx={{
+                    textAlign: 'center', py: 8,
+                    border: '2px dashed', borderColor: 'divider',
+                    borderRadius: 3,
+                    background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+                }}>
+                    <AutoStoriesIcon sx={{ fontSize: 56, color: 'primary.light', mb: 2 }} />
+                    <Typography variant="h6" color="text.secondary" fontWeight={600}>
+                        Your feed is empty
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1, maxWidth: 320, mx: 'auto' }}>
+                        Follow some writers to see their posts here. Use Search to discover authors you love.
                     </Typography>
                 </Box>
             ) : (
                 <>
-                    {currentPosts.map(post => (
-                        <PostCard 
-                            key={post.id} 
-                            post={post} 
-                            onLikeUpdate={() => fetchPosts()}
-                        />
+                    {posts.map((post, index) => (
+                        <Box
+                            key={post.id}
+                            sx={{
+                                animation: 'fadeSlideIn 0.3s ease forwards',
+                                animationDelay: `${Math.min(index, 5) * 0.05}s`,
+                                opacity: 0,
+                                '@keyframes fadeSlideIn': {
+                                    from: { opacity: 0, transform: 'translateY(12px)' },
+                                    to: { opacity: 1, transform: 'translateY(0)' },
+                                },
+                            }}
+                        >
+                            <PostCard
+                                post={post}
+                                onLikeUpdate={() => fetchPosts(1)}
+                            />
+                        </Box>
                     ))}
+
+                    {loadingMore && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                            <CircularProgress size={28} />
+                        </Box>
+                    )}
+
+                    {!hasMore && posts.length > 0 && (
+                        <Box sx={{ textAlign: 'center', py: 4 }}>
+                            <Divider sx={{ mb: 2 }}>
+                                <Chip
+                                    label="You're all caught up ✨"
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                />
+                            </Divider>
+                        </Box>
+                    )}
                 </>
-            )}
-            
-            {loadingMore && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                    <CircularProgress />
-                </Box>
             )}
         </Box>
     );
