@@ -1,4 +1,3 @@
-create database adbms_proj1;
 use adbms_proj1;
 
 create table users (
@@ -199,57 +198,7 @@ select b.id, b.title, b.description, b.coin_price, b.cover_image, b.created_at, 
 (select sum(coins_spent) from transactions where book_id = b.id) as total_revenue
 from books b join users u on b.author_id = u.id;
 
-delimiter $$
 
-create trigger before_transaction_insert
-before insert on transactions
-for each row
-begin
-    declare user_balance int;
-    declare book_price int;
-
-    select coin_balance into user_balance
-    from wallets
-    where user_id = new.user_id;
-
-    select coin_price into book_price
-    from books
-    where id = new.book_id;
-
-    if user_balance < book_price then
-        signal sqlstate '45000'
-        set message_text = 'insufficient coin balance';
-    end if;
-
-    set new.coins_spent = book_price;
-end$$
-
-delimiter ;
-
-delimiter $$
-
-create trigger after_transaction_insert
-after insert on transactions
-for each row
-begin
-    update wallets
-    set coin_balance = coin_balance - new.coins_spent
-    where user_id = new.user_id;
-end$$
-
-delimiter ;
-
-delimiter $$
-
-create trigger after_user_insert
-after insert on users
-for each row
-begin
-    insert into wallets (user_id, coin_balance)
-    values (new.id, 0);
-end$$
-
-delimiter ;
 
 CREATE TABLE coin_purchases (
     id INT AUTO_INCREMENT PRIMARY KEY,

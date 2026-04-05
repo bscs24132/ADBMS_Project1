@@ -3,7 +3,7 @@
 --   - 1 admin
 --   - 40 writers
 --   - 69 readers
-INSERT INTO users (id, username, password, email, bio, profile_picture, date_joined, role) VALUES
+INSERT IGNORE INTO users (id, username, password, email, bio, profile_picture, date_joined, role) VALUES
 
 (1, 'alex_wright', 'Adm!n@2023', 'alex.wright@gmail.com', 'Platform administrator. Keeping the community safe and thriving.', 'https://i.pravatar.cc/150?img=1', '2023-01-01 08:00:00', 'admin'),
 
@@ -121,7 +121,7 @@ INSERT INTO users (id, username, password, email, bio, profile_picture, date_joi
 
 -- WALLETS TABLE - 110 records
 
-INSERT INTO wallets (user_id, coin_balance, updated_at) VALUES
+INSERT IGNORE INTO wallets (user_id, coin_balance, updated_at) VALUES
 (2,   1240, '2026-02-10 09:45:11'),  
 (3,    890, '2026-01-28 16:20:33'),
 (4,    320, '2025-11-05 11:15:47'),
@@ -235,7 +235,7 @@ INSERT INTO wallets (user_id, coin_balance, updated_at) VALUES
 -- NOTEBOOKS TABLE SEED DATA
 -- 58 notebooks total
 
-INSERT INTO notebooks (author_id, title, description, created_at) VALUES
+INSERT IGNORE INTO notebooks (author_id, title, description, created_at) VALUES
 
 (2, 'Eldoria Chronicles', 'High fantasy series – worldbuilding, chapters, and lore documents.', '2023-04-15 14:30:00'),
 (2, 'Starlit Verses', 'Poetry collection about space, dreams, and human connection.', '2024-09-22 10:45:00'),
@@ -295,7 +295,7 @@ INSERT INTO notebooks (author_id, title, description, created_at) VALUES
 -- BOOKS TABLE SEED DATA
 -- ~85 records 
 
-INSERT INTO books (title, description, content, author_id, coin_price, cover_image, is_approved, created_at) VALUES
+INSERT IGNORE INTO books (title, description, content, author_id, coin_price, cover_image, is_approved, created_at) VALUES
 
 ('The Dragon''s Oath', 'First book in the Eldoria Chronicles. A young thief discovers she is heir to an ancient dragon pact.', 'The wind howled through the narrow streets of Eldor as Elara slipped another coin into her pouch...', 2, 120, 'https://picsum.photos/seed/dragon-oath/400/600', TRUE, '2023-08-15 14:20:00'),
 ('Crown of Shadows', 'Book 2: War brews between realms as old prophecies awaken.', 'The throne room was silent except for the crackle of black flames...', 2, 150, 'https://picsum.photos/seed/crown-shadows/400/600', TRUE, '2024-03-22 09:45:00'),
@@ -331,7 +331,7 @@ INSERT INTO books (title, description, content, author_id, coin_price, cover_ima
 -- POSTS TABLE
 -- ~180 records
 
-INSERT INTO posts (notebook_id, author_id, content, image, created_at) VALUES
+INSERT IGNORE INTO posts (notebook_id, author_id, content, image, created_at) VALUES
 
 (NULL, 2, 'Just finished outlining the final battle in Eldoria Book 3. My hands are shaking from the emotions 😭 Who’s ready?', NULL, '2025-11-20 14:35:00'),
 (1, 2, 'Chapter 12 excerpt: Elara faced the dragon council. “I am no thief,” she said. “I am the oath-keeper.” Thoughts?', NULL, '2025-12-05 09:10:00'),
@@ -382,7 +382,7 @@ INSERT INTO posts (notebook_id, author_id, content, image, created_at) VALUES
 -- LIKES TABLE
 -- 720 records
 
-INSERT INTO likes (user_id, post_id, created_at) VALUES
+INSERT IGNORE INTO likes (user_id, post_id, created_at) VALUES
 
 (42, 1, '2025-11-21 08:10:00'), (43, 1, '2025-11-21 08:55:00'), (44, 1, '2025-11-21 09:20:00'),
 (45, 1, '2025-11-21 09:45:00'), (46, 1, '2025-11-21 10:15:00'), (47, 1, '2025-11-21 10:40:00'),
@@ -422,7 +422,7 @@ INSERT INTO likes (user_id, post_id, created_at) VALUES
 -- COMMENTS TABLE
 -- Total ~78 comments
 
-INSERT INTO comments (user_id, post_id, content, created_at) VALUES
+INSERT IGNORE INTO comments (user_id, post_id, content, created_at) VALUES
 
 (42, 1, 'Excited to see how the battle turns out!', '2025-11-21 09:25:00'),
 (55, 1, 'Your writing sessions always inspire me.', '2025-11-21 13:10:00'),
@@ -467,7 +467,7 @@ INSERT INTO comments (user_id, post_id, content, created_at) VALUES
 
 -- TRANSACTIONS TABLE
 -- ~120 records
-INSERT INTO transactions (user_id, book_id, coins_spent, purchased_at) VALUES
+INSERT IGNORE INTO transactions (user_id, book_id, coins_spent, purchased_at) VALUES
 
 (42, 1, 120, '2023-09-05 14:20:00'), 
 (44, 1, 120, '2023-10-12 09:45:00'),
@@ -547,7 +547,7 @@ INSERT INTO transactions (user_id, book_id, coins_spent, purchased_at) VALUES
 -- FOLLOWS TABLE
 -- ~450 records
 
-INSERT INTO follows (follower_id, following_id, created_at) VALUES
+INSERT IGNORE INTO follows (follower_id, following_id, created_at) VALUES
 
 (42, 2, '2023-03-20 10:15:00'), (43, 2, '2023-05-12 14:40:00'), (44, 2, '2023-08-05 09:30:00'),
 (45, 2, '2023-11-18 16:55:00'), (46, 2, '2024-02-10 11:20:00'), (47, 2, '2024-04-22 13:05:00'),
@@ -589,7 +589,7 @@ INSERT INTO follows (follower_id, following_id, created_at) VALUES
 -- GROUPCHATS TABLE
 -- ~65 records
 
-INSERT INTO groupchats (name, created_by, writer_id, created_at) VALUES
+INSERT IGNORE INTO groupchats (name, created_by, writer_id, created_at) VALUES
 
 ('Maya Stone Fantasy Realm', 42, 2, '2024-05-15 14:20:00'),
 ('Eldoria Chronicles Fans', 55, 2, '2024-09-08 11:45:00'),
@@ -655,7 +655,7 @@ INSERT INTO groupchats (name, created_by, writer_id, created_at) VALUES
 -- MEMBERS TABLE
 -- ~520 records
 
-INSERT INTO members (group_id, user_id, role, joined_at) VALUES
+INSERT IGNORE INTO members (group_id, user_id, role, joined_at) VALUES
 
 (1, 42, 'admin', '2024-05-15 14:20:00'),
 (1, 44, 'member', '2024-05-15 15:05:00'),
@@ -736,7 +736,7 @@ INSERT INTO members (group_id, user_id, role, joined_at) VALUES
 -- MESSAGES TABLE
 -- ~480 records total
 
-INSERT INTO messages (group_id, sender_id, content, sent_at) VALUES
+INSERT IGNORE INTO messages (group_id, sender_id, content, sent_at) VALUES
 
 (1, 42, 'Welcome everyone to Maya Stone Fantasy Realm! This is the place to discuss Eldoria, her poetry, new chapters, theories — everything Maya!', '2024-05-15 14:25:00'),
 (1, 42, 'Quick rules: be respectful, no spoilers without warning, keep it Maya-focused. Have fun!', '2024-05-15 14:28:00'),
@@ -796,7 +796,7 @@ INSERT INTO messages (group_id, sender_id, content, sent_at) VALUES
 -- POSTS BY READERS
 -- ~80–100 records
 
-INSERT INTO posts (notebook_id, author_id, content, image, created_at) VALUES
+INSERT IGNORE INTO posts (notebook_id, author_id, content, image, created_at) VALUES
 
 (NULL, 42, 'Just finished Maya Stone''s Crown of Shadows... that ending left me speechless 😭 Who else cried?', NULL, '2025-04-10 21:15:00'),
 (NULL, 42, 'Current read: Luna Scott - Hearts on the Horizon. The train station scene broke me. 10/10 recommend.', 'https://picsum.photos/seed/book-on-train/800/450', '2025-11-28 19:40:00'),
@@ -843,7 +843,7 @@ INSERT INTO posts (notebook_id, author_id, content, image, created_at) VALUES
 -- FOLLOWS
 -- ~250 records 
 
-INSERT INTO follows (follower_id, following_id, created_at) VALUES
+INSERT IGNORE INTO follows (follower_id, following_id, created_at) VALUES
 
 (44, 42, '2025-04-15 10:20:00'),
 (47, 42, '2025-05-02 13:45:00'),
@@ -894,3 +894,54 @@ INSERT INTO follows (follower_id, following_id, created_at) VALUES
 (46, 63, '2026-01-08 12:45:00'),
 (49, 71, '2025-10-25 16:10:00');
 
+delimiter $$
+
+create trigger before_transaction_insert
+before insert on transactions
+for each row
+begin
+    declare user_balance int;
+    declare book_price int;
+
+    select coin_balance into user_balance
+    from wallets
+    where user_id = new.user_id;
+
+    select coin_price into book_price
+    from books
+    where id = new.book_id;
+
+    if user_balance < book_price then
+        signal sqlstate '45000'
+        set message_text = 'insufficient coin balance';
+    end if;
+
+    set new.coins_spent = book_price;
+end$$
+
+delimiter ;
+
+delimiter $$
+
+create trigger after_transaction_insert
+after insert on transactions
+for each row
+begin
+    update wallets
+    set coin_balance = coin_balance - new.coins_spent
+    where user_id = new.user_id;
+end$$
+
+delimiter ;
+
+delimiter $$
+
+create trigger after_user_insert
+after insert on users
+for each row
+begin
+    insert into wallets (user_id, coin_balance)
+    values (new.id, 0);
+end$$
+
+delimiter ;
