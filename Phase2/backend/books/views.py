@@ -12,10 +12,9 @@ class BookListView(APIView):
 
     def get(self, request):
         search_query = request.GET.get('search', '')
-        
+
         with connection.cursor() as cursor:
             if search_query:
-                # Search by title (case-insensitive)
                 cursor.execute("""
                     SELECT b.id, b.title, b.description, b.author_id,
                            u.username as author_username, b.coin_price,
@@ -23,8 +22,8 @@ class BookListView(APIView):
                     FROM books b
                     JOIN users u ON b.author_id = u.id
                     WHERE b.is_approved = 1 AND b.title LIKE %s
-                    ORDER BY 
-                        CASE 
+                    ORDER BY
+                        CASE
                             WHEN b.title LIKE %s THEN 1
                             WHEN b.title LIKE %s THEN 2
                             ELSE 3
@@ -41,10 +40,10 @@ class BookListView(APIView):
                     WHERE b.is_approved = 1
                     ORDER BY b.created_at DESC
                 """)
-            
+
             columns = [col[0] for col in cursor.description]
             books = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        
+
         return Response(books)
 
     def post(self, request):
@@ -120,17 +119,28 @@ class WriterBooksView(APIView):
 
     def get(self, request, user_id):
         with connection.cursor() as cursor:
+            # ── FIX: use book_stats view which includes no_of_sales and total_revenue ──
             cursor.execute("""
-                SELECT b.id, b.title, b.description, b.author_id,
-                       u.username as author_username, b.coin_price,
-                       b.cover_image, b.is_approved, b.created_at
-                FROM books b
-                JOIN users u ON b.author_id = u.id
-                WHERE b.author_id = %s
-                ORDER BY b.created_at DESC
+                SELECT
+                    bs.id,
+                    bs.title,
+                    bs.description,
+                    bs.author_id,
+                    bs.author_name as author_username,
+                    bs.coin_price,
+                    bs.cover_image,
+                    bs.created_at,
+                    b.is_approved,
+                    COALESCE(bs.no_of_sales, 0)    as no_of_sales,
+                    COALESCE(bs.total_revenue, 0)  as total_revenue
+                FROM book_stats bs
+                JOIN books b ON bs.id = b.id
+                WHERE bs.author_id = %s
+                ORDER BY bs.created_at DESC
             """, [user_id])
             columns = [col[0] for col in cursor.description]
             books = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
         return Response(books)
 
 
@@ -185,7 +195,6 @@ class PurchaseBookView(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-               
                 cursor.execute("""
                     INSERT INTO transactions (user_id, book_id, coins_spent, purchased_at)
                     VALUES (%s, %s, %s, NOW())

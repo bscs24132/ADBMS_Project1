@@ -9,12 +9,14 @@ from django.contrib.auth.hashers import check_password, make_password
 from .models import User
 from .serializers import UserProfileSerializer, RegisterSerializer
 from django.db import transaction
+
+
 class UserSearchView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
         search_query = request.GET.get('search', '')
-        
+
         with connection.cursor() as cursor:
             if search_query:
                 cursor.execute("""
@@ -37,11 +39,13 @@ class UserSearchView(APIView):
                     ORDER BY username ASC
                     LIMIT 50
                 """)
-            
+
             columns = [col[0] for col in cursor.description]
             users = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        
+
         return Response(users)
+
+
 class CoinPurchasesView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -53,27 +57,27 @@ class CoinPurchasesView(APIView):
                 WHERE user_id = %s
                 ORDER BY purchased_at DESC
             """, [request.user.id])
-            
+
             columns = [col[0] for col in cursor.description]
             purchases = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        
+
         return Response(purchases)
+
+
 class BuyCoinsView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request):
-        # Get data from request
         coins = request.data.get('coins')
         account_no = request.data.get('account_no')
         amount = request.data.get('amount')
-        
-        # Validation
+
         if not coins or not account_no or not amount:
             return Response(
                 {'error': 'coins, account_no, and amount are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             coins = int(coins)
             amount = float(amount)
@@ -82,44 +86,41 @@ class BuyCoinsView(APIView):
                 {'error': 'coins must be integer, amount must be number'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         if coins <= 0 or amount <= 0:
             return Response(
                 {'error': 'coins and amount must be positive'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         if len(account_no) < 5:
             return Response(
                 {'error': 'account_no must be at least 5 characters'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             with transaction.atomic():
                 with connection.cursor() as cursor:
-                    # 1. Record the coin purchase
                     cursor.execute("""
                         INSERT INTO coin_purchases 
                         (user_id, coins_purchased, account_no, amount_paid, purchased_at)
                         VALUES (%s, %s, %s, %s, NOW())
                     """, [request.user.id, coins, account_no, amount])
-                    
+
                     purchase_id = cursor.lastrowid
-                    
-                    # 2. Add coins to wallet
+
                     cursor.execute("""
                         UPDATE wallets 
                         SET coin_balance = coin_balance + %s, updated_at = NOW()
                         WHERE user_id = %s
                     """, [coins, request.user.id])
-                    
-                    # 3. Get updated balance
+
                     cursor.execute("""
                         SELECT coin_balance FROM wallets WHERE user_id = %s
                     """, [request.user.id])
                     new_balance = cursor.fetchone()[0]
-                
+
                 return Response({
                     'message': 'Coins purchased successfully',
                     'purchase_id': purchase_id,
@@ -128,12 +129,13 @@ class BuyCoinsView(APIView):
                     'account_no': account_no[-4:].rjust(len(account_no), '*'),
                     'new_balance': new_balance
                 }, status=status.HTTP_201_CREATED)
-                
+
         except Exception as e:
             return Response(
                 {'error': f'Purchase failed: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -184,7 +186,6 @@ class LoginView(APIView):
         user_id, username, hashed_password = row
 
         if check_password(password, hashed_password):
-
             user = User(id=user_id, username=username)
 
             with connection.cursor() as cursor:
@@ -216,26 +217,25 @@ class LoginView(APIView):
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request):
         try:
             refresh_token = request.data.get('refresh')
-            
+
             if not refresh_token:
                 return Response(
                     {'error': 'Refresh token is required'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
-            # Blacklist the refresh token
+
             token = RefreshToken(refresh_token)
             token.blacklist()
-            
+
             return Response(
                 {'message': 'Successfully logged out'},
                 status=status.HTTP_200_OK
             )
-            
+
         except TokenError:
             return Response(
                 {'error': 'Invalid or expired token'},
@@ -247,21 +247,35 @@ class LogoutView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
+    def get(self, request):
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT id, username, bio, profile_picture, role, date_joined, email
+                FROM users WHERE id = %s
+            """, [request.user.id])
+            row = cursor.fetchone()
+            columns = [col[0] for col in cursor.description]
+
+        if not row:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(dict(zip(columns, row)))
+
     def put(self, request):
         user = request.user
         data = request.data
-        
-        # Update allowed fields
+
         if 'bio' in data:
             user.bio = data['bio']
         if 'profile_picture' in data:
             user.profile_picture = data['profile_picture']
-        
+
         user.save()
-        
+
         serializer = UserProfileSerializer(user)
         return Response(serializer.data)
 
@@ -406,7 +420,7 @@ class WalletView(APIView):
 
 class WalletTransactionsView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
         with connection.cursor() as cursor:
             cursor.execute("""
@@ -416,10 +430,10 @@ class WalletTransactionsView(APIView):
                 WHERE t.user_id = %s
                 ORDER BY t.purchased_at DESC
             """, [request.user.id])
-            
+
             columns = [col[0] for col in cursor.description]
             transactions = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        
+
         return Response(transactions)
 
 
@@ -472,7 +486,6 @@ class ForgotPasswordView(APIView):
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Check if there's already a pending request for this user
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT COUNT(*) FROM password_reset_requests WHERE user_id = %s AND status = 'pending'",
@@ -481,7 +494,10 @@ class ForgotPasswordView(APIView):
             existing = cursor.fetchone()[0]
 
         if existing > 0:
-            return Response({'error': 'A reset request is already pending for this account'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'error': 'A reset request is already pending for this account'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         with connection.cursor() as cursor:
             cursor.execute(
@@ -489,7 +505,10 @@ class ForgotPasswordView(APIView):
                 [user.id, email]
             )
 
-        return Response({'message': 'Password reset request submitted. Please wait for admin approval.'}, status=status.HTTP_201_CREATED)
+        return Response(
+            {'message': 'Password reset request submitted. Please wait for admin approval.'},
+            status=status.HTTP_201_CREATED
+        )
 
 
 class AdminPasswordResetListView(APIView):
@@ -505,7 +524,6 @@ class AdminPasswordResetListView(APIView):
                        r.requested_at, r.status
                 FROM password_reset_requests r
                 JOIN users u ON r.user_id = u.id
-                WHERE r.status = 'pending'
                 ORDER BY r.requested_at DESC
             """)
 
@@ -515,13 +533,19 @@ class AdminPasswordResetListView(APIView):
         return Response(results)
 
 
-# Admin just approves the request — no password set here
 class ProcessPasswordResetView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, id):
         if request.user.role != 'admin':
             return Response({'error': 'Admin access required'}, status=status.HTTP_403_FORBIDDEN)
+
+        action = request.data.get('action')
+        if action not in ['approve', 'reject']:
+            return Response(
+                {'error': 'action must be approve or reject'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         with connection.cursor() as cursor:
             cursor.execute(
@@ -536,17 +560,65 @@ class ProcessPasswordResetView(APIView):
             user_id, current_status = row
 
             if current_status != 'pending':
-                return Response({'error': 'Request already processed or cancelled'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'error': 'Request already processed or cancelled'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
+            if action == 'reject':
+                cursor.execute(
+                    "UPDATE password_reset_requests SET status = 'cancelled' WHERE id = %s",
+                    [id]
+                )
+                return Response({'message': 'Password request rejected.'}, status=status.HTTP_200_OK)
+
+            # ── APPROVE: admin provides new password manually ──
+            new_password = request.data.get('new_password', '').strip()
+
+            if not new_password:
+                return Response(
+                    {'error': 'new_password is required when approving'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Same validation rules as registration
+            if len(new_password) < 8:
+                return Response(
+                    {'error': 'Password must be at least 8 characters'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if not any(c.isdigit() for c in new_password):
+                return Response(
+                    {'error': 'Password must contain at least one number'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if not any(c in '!@#$%^&*(),.?":{}|<>' for c in new_password):
+                return Response(
+                    {'error': 'Password must contain at least one symbol (!@#$%^&* etc.)'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Hash and save
+            cursor.execute(
+                "UPDATE users SET password = %s WHERE id = %s",
+                [make_password(new_password), user_id]
+            )
             cursor.execute(
                 "UPDATE password_reset_requests SET status = 'processed' WHERE id = %s",
                 [id]
             )
+            cursor.execute("SELECT email, username FROM users WHERE id = %s", [user_id])
+            user_row = cursor.fetchone()
+            email, username = user_row if user_row else ('', '')
 
-        return Response({'message': 'Request approved. User can now reset their password.'}, status=status.HTTP_200_OK)
+        return Response({
+            'message': 'Password updated. Send the new password to the user via email.',
+            'username': username,
+            'email': email,
+            'new_password': new_password,
+        }, status=status.HTTP_200_OK)
 
 
-# User sets their own new password after admin approves
 class ResetPasswordView(APIView):
     permission_classes = [AllowAny]
 
@@ -555,15 +627,16 @@ class ResetPasswordView(APIView):
         new_password = request.data.get('new_password')
 
         if not email or not new_password:
-            return Response({'error': 'Email and new_password are required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'error': 'Email and new_password are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # Check if user exists
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Check if there's an approved (processed) reset request for this user
         with connection.cursor() as cursor:
             cursor.execute("""
                 SELECT id FROM password_reset_requests
@@ -581,16 +654,17 @@ class ResetPasswordView(APIView):
 
         reset_request_id = row[0]
 
-        # Hash and update the password
         with connection.cursor() as cursor:
             cursor.execute(
                 "UPDATE users SET password = %s WHERE id = %s",
                 [make_password(new_password), user.id]
             )
-            # Mark the request as cancelled so it can't be reused
             cursor.execute(
                 "UPDATE password_reset_requests SET status = 'cancelled' WHERE id = %s",
                 [reset_request_id]
             )
 
-        return Response({'message': 'Password updated successfully. You can now log in.'}, status=status.HTTP_200_OK)
+        return Response(
+            {'message': 'Password updated successfully. You can now log in.'},
+            status=status.HTTP_200_OK
+        )

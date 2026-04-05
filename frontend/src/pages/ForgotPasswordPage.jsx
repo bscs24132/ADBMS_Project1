@@ -70,8 +70,8 @@ const ForgotPasswordPage = () => {
                                     </Box>
                                     <Typography variant="h5" fontWeight={700}>Forgot Password?</Typography>
                                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                        Enter your email address and we'll send a reset request to the admin.
-                                        Once approved, you'll be able to set a new password.
+                                        Enter your email address and we'll send a request to the admin.
+                                        Once approved, the admin will email you your new password.
                                     </Typography>
                                 </Box>
 
@@ -101,7 +101,7 @@ const ForgotPasswordPage = () => {
                                     disabled={loading || !email.trim()}
                                     sx={{ mt: 3, mb: 2 }}
                                 >
-                                    {loading ? <CircularProgress size={24} /> : 'Send Reset Request'}
+                                    {loading ? <CircularProgress size={24} /> : 'Send Request'}
                                 </Button>
 
                                 <Box sx={{ textAlign: 'center' }}>

@@ -1,8 +1,0 @@
-# .env.example - SAFE TO COMMIT TO GIT
-DB_NAME=adbms_proj1
-DB_USER=root
-DB_PASSWORD=Maha_#11
-DB_HOST=localhost
-DB_PORT=3306
-SECRET_KEY='FRrHX2mV6Q1lhyzIDnl2uiD70HB0OvCMrSh0zut5MIuon53kv9o1pHepjXNPFighCTU'
-JWT_SECRET='hIOaseQOTnQupB4ZwF5edz7bNYu3Xn6tvRm_u9xtwc_i9AVgqXfqZMBdMPbiVX4UQYQ'

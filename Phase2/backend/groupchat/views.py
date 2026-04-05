@@ -4,134 +4,14 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from django.db import connection
 from django.db import transaction
-class LeaveGroupView(APIView):
-    permission_classes = [IsAuthenticated]
-    
-    def post(self, request, group_id):
-        with connection.cursor() as cursor:
-            # Check if user is a member and get their role
-            cursor.execute("""
-                SELECT role FROM members 
-                WHERE group_id = %s AND user_id = %s
-            """, [group_id, request.user.id])
-            member = cursor.fetchone()
-            
-            if not member:
-                return Response(
-                    {'error': 'You are not a member of this group'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            user_role = member[0]
-            
-            # If user is admin, need to handle ownership transfer
-            if user_role == 'admin':
-                # Check if there are other members
-                cursor.execute("""
-                    SELECT user_id, role FROM members 
-                    WHERE group_id = %s AND user_id != %s
-                    ORDER BY joined_at ASC
-                """, [group_id, request.user.id])
-                other_members = cursor.fetchall()
-                
-                if other_members:
-                    # Transfer admin role to the next member
-                    new_admin_id = other_members[0][0]
-                    cursor.execute("""
-                        UPDATE members 
-                        SET role = 'admin' 
-                        WHERE group_id = %s AND user_id = %s
-                    """, [group_id, new_admin_id])
-                    
-                    # Remove current user
-                    cursor.execute("""
-                        DELETE FROM members 
-                        WHERE group_id = %s AND user_id = %s
-                    """, [group_id, request.user.id])
-                    
-                    return Response({
-                        'message': 'You left the group. Admin role transferred to another member.'
-                    })
-                else:
-                    # No other members, delete the group
-                    cursor.execute("DELETE FROM groupchats WHERE id = %s", [group_id])
-                    return Response({
-                        'message': 'You were the last member. The group has been deleted.'
-                    })
-            
-            # Regular member leaving
-            else:
-                cursor.execute("""
-                    DELETE FROM members 
-                    WHERE group_id = %s AND user_id = %s
-                """, [group_id, request.user.id])
-                
-                # Check if group has any members left
-                cursor.execute("""
-                    SELECT COUNT(*) FROM members WHERE group_id = %s
-                """, [group_id])
-                member_count = cursor.fetchone()[0]
-                
-                if member_count == 0:
-                    cursor.execute("DELETE FROM groupchats WHERE id = %s", [group_id])
-                    return Response({
-                        'message': 'You left the group. The group has been deleted as it had no members.'
-                    })
-                
-                return Response({'message': 'Successfully left the group'})
-class GroupMessagesView(APIView):
-    permission_classes = [IsAuthenticated]
-    
-    def get(self, request, group_id):
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT m.id, m.sender_id, u.username as sender_username, m.content, m.sent_at
-                FROM messages m
-                JOIN users u ON m.sender_id = u.id
-                WHERE m.group_id = %s
-                ORDER BY m.sent_at ASC
-            """, [group_id])
-            
-            columns = [col[0] for col in cursor.description]
-            messages = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        
-        return Response(messages)
-    
-    def post(self, request, group_id):
-        content = request.data.get('content')
-        
-        if not content:
-            return Response(
-                {'error': 'Message content is required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                INSERT INTO messages (group_id, sender_id, content, sent_at)
-                VALUES (%s, %s, %s, NOW())
-            """, [group_id, request.user.id, content])
-            
-            cursor.execute("SELECT LAST_INSERT_ID()")
-            message_id = cursor.fetchone()[0]
-            
-            cursor.execute("""
-                SELECT m.id, m.sender_id, u.username as sender_username, m.content, m.sent_at
-                FROM messages m
-                JOIN users u ON m.sender_id = u.id
-                WHERE m.id = %s
-            """, [message_id])
-            
-            columns = [col[0] for col in cursor.description]
-            message = dict(zip(columns, cursor.fetchone()))
-        
-        return Response(message, status=status.HTTP_201_CREATED)
+
+
 class GroupChatListView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
         writer_id = request.GET.get('writer_id')
-        
+
         with connection.cursor() as cursor:
             if writer_id:
                 cursor.execute("""
@@ -148,51 +28,48 @@ class GroupChatListView(APIView):
                     FROM groupchats g
                     ORDER BY g.created_at DESC
                 """)
-            
+
             columns = [col[0] for col in cursor.description]
             groups = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        
+
         return Response(groups)
+
+
 class CreateGroupView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request):
         name = request.data.get('name')
-        description = request.data.get('description', '')
         writer_id = request.data.get('writer_id')
-        
+
         if not name:
             return Response(
                 {'error': 'Group name is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             with transaction.atomic():
                 with connection.cursor() as cursor:
-                    # Insert group
                     cursor.execute("""
                         INSERT INTO groupchats (name, created_by, writer_id, created_at)
                         VALUES (%s, %s, %s, NOW())
                     """, [name, request.user.id, writer_id])
-                    
-                    # Get group ID
+
                     cursor.execute("SELECT LAST_INSERT_ID()")
                     group_id = cursor.fetchone()[0]
-                    
-                    # Add creator as admin member
+
                     cursor.execute("""
                         INSERT INTO members (group_id, user_id, role, joined_at)
                         VALUES (%s, %s, 'admin', NOW())
                     """, [group_id, request.user.id])
-                    
-                    # Get group details
+
                     cursor.execute("""
                         SELECT id, name, created_by, writer_id, created_at
                         FROM groupchats WHERE id = %s
                     """, [group_id])
                     group = cursor.fetchone()
-                    
+
                     return Response({
                         'id': group[0],
                         'name': group[1],
@@ -203,13 +80,15 @@ class CreateGroupView(APIView):
                         'user_role': 'admin',
                         'message': 'Group created successfully'
                     }, status=status.HTTP_201_CREATED)
-                    
+
         except Exception as e:
             print(f"Error creating group: {e}")
             return Response(
                 {'error': f'Failed to create group: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
 class WriterGroupsView(APIView):
     permission_classes = [AllowAny]
 
@@ -301,9 +180,11 @@ class MyGroupsView(APIView):
 
     def get(self, request):
         with connection.cursor() as cursor:
+            # ── FIX: added member_count subquery so cards show correct count ──
             cursor.execute("""
                 SELECT g.id, g.name, g.created_by, u.username as created_by_username,
-                       g.writer_id, g.created_at, m.role
+                       g.writer_id, g.created_at, m.role,
+                       (SELECT COUNT(*) FROM members WHERE group_id = g.id) as member_count
                 FROM groupchats g
                 JOIN members m ON g.id = m.group_id
                 JOIN users u ON g.created_by = u.id
@@ -368,6 +249,7 @@ class RemoveMemberView(APIView):
                     status=status.HTTP_403_FORBIDDEN
                 )
 
+            # Group admin cannot leave — must delete the group instead
             if is_creator and target_user_id == group_creator_id:
                 return Response(
                     {'error': 'Group admin cannot leave. Delete the group instead.'},
@@ -443,51 +325,33 @@ class SendMessageView(APIView):
 
 class GroupMessagesView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request, group_id):
         with connection.cursor() as cursor:
+            # Verify membership before returning messages
             cursor.execute("""
-                SELECT m.id, m.sender_id, u.username as sender_username, m.content, m.sent_at
+                SELECT COUNT(*) FROM members
+                WHERE user_id = %s AND group_id = %s
+            """, [request.user.id, group_id])
+            if cursor.fetchone()[0] == 0:
+                return Response(
+                    {'error': 'You must be a member to view messages'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            cursor.execute("""
+                SELECT m.id, m.sender_id, u.username as sender_username,
+                       u.profile_picture, m.content, m.sent_at
                 FROM messages m
                 JOIN users u ON m.sender_id = u.id
                 WHERE m.group_id = %s
                 ORDER BY m.sent_at ASC
             """, [group_id])
-            
+
             columns = [col[0] for col in cursor.description]
             messages = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        
+
         return Response(messages)
-    
-    def post(self, request, group_id):  # ← Make sure this exists
-        content = request.data.get('content')
-        
-        if not content:
-            return Response(
-                {'error': 'Message content is required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                INSERT INTO messages (group_id, sender_id, content, sent_at)
-                VALUES (%s, %s, %s, NOW())
-            """, [group_id, request.user.id, content])
-            
-            cursor.execute("SELECT LAST_INSERT_ID()")
-            message_id = cursor.fetchone()[0]
-            
-            cursor.execute("""
-                SELECT m.id, m.sender_id, u.username as sender_username, m.content, m.sent_at
-                FROM messages m
-                JOIN users u ON m.sender_id = u.id
-                WHERE m.id = %s
-            """, [message_id])
-            
-            columns = [col[0] for col in cursor.description]
-            message = dict(zip(columns, cursor.fetchone()))
-        
-        return Response(message, status=status.HTTP_201_CREATED)
 
 
 class DeleteMessageView(APIView):
@@ -513,9 +377,11 @@ class DeleteMessageView(APIView):
             cursor.execute("DELETE FROM messages WHERE id = %s", [message_id])
 
         return Response({'message': 'Message deleted'}, status=status.HTTP_204_NO_CONTENT)
+
+
 class GroupMembersView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request, group_id):
         with connection.cursor() as cursor:
             cursor.execute("""
@@ -523,10 +389,44 @@ class GroupMembersView(APIView):
                 FROM members m
                 JOIN users u ON m.user_id = u.id
                 WHERE m.group_id = %s
-                ORDER BY m.joined_at ASC
+                ORDER BY m.role DESC, m.joined_at ASC
             """, [group_id])
-            
+
             columns = [col[0] for col in cursor.description]
             members = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        
+
         return Response(members)
+
+
+class LeaveGroupView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, group_id):
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT role FROM members
+                WHERE group_id = %s AND user_id = %s
+            """, [group_id, request.user.id])
+            member = cursor.fetchone()
+
+            if not member:
+                return Response(
+                    {'error': 'You are not a member of this group'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            user_role = member[0]
+
+            if user_role == 'admin':
+                return Response(
+                    {'error': 'Group admin cannot leave. Delete the group instead.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Regular member leaving
+            cursor.execute("""
+                DELETE FROM members
+                WHERE group_id = %s AND user_id = %s
+            """, [group_id, request.user.id])
+
+        return Response({'message': 'Successfully left the group'})
