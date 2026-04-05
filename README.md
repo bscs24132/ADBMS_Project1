@@ -1,12 +1,13 @@
 ## Project Overview
-#Group Members:
-#1. Name: Maha Faisal           Roll-Number: Bscs24048
-#2. Name: Huda Imran            Roll-Number: Bscs24132
+Group Members:
+
+1. Name: Maha Faisal           Roll-Number: Bscs24048
+2. Name: Huda Imran            Roll-Number: Bscs24132
 
 
-This project is a platform designed for authors and their readers. It is inspired by social media platforms, but it is not a typical social media app. Instead, it focuses on creating a space where authors can share their work and directly interact with their audience.
-There are three types of users in the system: authors, admin and readers. The users can follow each other regardless of the fact whether they are a writer or a reader. An admin is not a usual user. An admin's only there to monitor the whole platform and has the authority to delete a post, delete a group, approve the books that the writer wants to upload on our platform for their fans to read, and can also reset password of an account by entering a new password for the requested account and emailing the requested the new password. Similarly, a reader is allowed to post posts, create groupchats and can link that groupchat to a writer. This will help the fans of the writer to find the groupchats that are linked to their favorite writers easily by filtering them. This helps people with same interests to connect on our platform. The readers can also buy coins and subscription for books and send messages in the groupchat. A writer can also follow other users, join groupchats but cannot create them, buy coins and subcriptions, upload their books that will be uploaded after the admin approves their upload, and can also post writings on their notebooks by creating a notebook if they want to. Every writer has their own personal dashboard where they can take a look on the graphs representing the sale of their books etc.
-The posts posted can be either text-based or include a single image. Other users can like and comment on these posts that makes the platform interactive and engaging.
+This project is a platform designed for authors and their fans i.e. readers. It is inspired by social media platforms, but it is not a typical social media app. Instead, it focuses on creating a space where authors can share their work and directly interact with their audience.
+There are three types of users in this system: authors, admins and readers. The users can follow each other regardless of the fact whether they are a writer or a reader. An admin is not a usual user. An admin's only there to monitor the whole platform and has the authority to delete a post, delete a group, approve the books that the writer wants to upload on our platform for their fans to read, and can also reset password of an account by entering a new password for the requested account and emailing it to the user. Similarly, a reader is allowed to post posts, create groupchats and can link that groupchat to a writer. This will help the fans of the writer to find the groupchats that are linked to their favorite writers easily by filtering them. This helps people with same interests to connect on our platform. The readers can also buy coins and subscription for books and send messages in the groupchat. A writer can also follow other users, join groupchats (but cannot create them), buy coins and subcriptions, upload their books that will be uploaded after the admin approves their upload, and can also post writings on their notebooks by creating a notebook if they want to. Every writer has their own personal dashboard where they can take a look on the metrics.
+The posts posted should be text-based. Other users can like and comment on these posts that makes the platform interactive and engaging.
 Overall, the goal of this project is to create a simple and interactive platform that encourages connection between authors and readers while also supporting content sharing and basic monetization features.
 
 ## Tech Stack
@@ -30,7 +31,6 @@ Overall, the goal of this project is to create a simple and interactive platform
 ### Database
 - **MySQL 8.0** – Relational database
 - **mysqlclient 2.2.0** – Database driver
-- **MEDIUMBLOB** – Binary image storage (BLOB)
 
 ### Authentication
 - **JWT (JSON Web Tokens)** – Stateless authentication
@@ -51,28 +51,27 @@ Overall, the goal of this project is to create a simple and interactive platform
 The system is divided into three main parts: frontend, backend, and database.
 The frontend is the part that the user interacts with. When a user clicks something or performs any action, that request is sent to the backend through the defined endpoints (like URLs).
 The backend is where all the main logic is written. It receives the request, figures out what the user wants to do, and then runs the related code for that specific action.
-After that, the backend interacts with the database. Depending on the request, it can either fetch data (like posts or user info) or update/store new data (like creating a post or changing the bio). These operations are handled through queries written in the backend.
+After that, the backend interacts with the database. Depending on the request, it can either fetch data (like posts or user info) or update/store new data (like creating a post or changing their account's bio). These operations are handled through queries written in the backend.
 All three parts work together so that the user’s actions are processed properly and the data is stored and retrieved when needed.
 
 ## UI Examples
 
-1. **Feed of a user**: Shows posts of users that a user is following.
-2. **Writer Dashboard**: Allows a writer to evaluate their book performance, view sales analytics, and manage content.
-3. **Group Chat**: Members can send and receive messages.
+1. **Feed of a user**: Shows posts of users that a user is following to give the app the social media touch.
+2. **Writer Dashboard**: Allows a writer to evaluate their book performance, view sales analytics, and manage content, helps in reviewing sale performance metrics etc.
+3. **Group Chat**: Members can send and receive messages, handles communication in our platform.
 
-*Note: All screenshots are present in the `media/` folder.*
 ## Setup & Installation
-### Prerequisites
+# Pre-requisites
 
 Before getting started, make sure you have the following software installed:
 
-| Software  | Minimum Version| Purpose                 |
-| Python    | 3.11 or higher | Backend runtime         |
-| Node.js   | 18.x or higher | Frontend runtime        |
-| MySQL     | 8.0 or higher  | Database engine         |
-| Git       | Latest         | Version control         |
+| Software  | Minimum Version | Purpose                 |
+| Python    | 3.11 or higher  | Backend runtime         |
+| Node.js   | 18.x or higher  | Frontend runtime        |
+| MySQL     | 8.0 or higher   | Database engine         |
+| Git       | Latest          | Version control         |
 
-### Step-by-Step Installation
+# Step-by-Step Installation
 
 1. Clone the Repository:
 git clone <your-repository-url>
@@ -81,9 +80,9 @@ cd ADBMS_Project1
 2. Backend Setup:
 cd Phase2
 python -m venv venv
-# Activate virtual environment
-# Windows: venv\Scripts\activate
-# Mac/Linux: source venv/bin/activate
+Activate virtual environment
+Windows: venv\Scripts\activate
+Mac/Linux: source venv/bin/activate
 pip install -r requirements.txt
 
 3. Configure Environment Variables:
@@ -107,35 +106,37 @@ SECRET_KEY: Django secret key for cryptographic signing
 JWT_SECRET: Secret key for JWT token generation
 
 4. Database Setup:
-# Open MySQL and create the database
+
+Open MySQL and create the database
 mysql -u root -p
 CREATE DATABASE adbms_proj1;
 EXIT;
-# Run schema and seed files
+
+Run schema and seed files
 mysql -u root -p adbms_proj1 < schema.sql
 mysql -u root -p adbms_proj1 < seed.sql
 
 5. Run Backend Server:
 cd backend
-python manage.py migrate
 python manage.py runserver
 Backend runs at: http://localhost:8000
 
 6. Frontend Setup (Open a new terminal):
 cd frontend
 npm install
-# Create .env file
+
+Create .env file
 echo "REACT_APP_API_URL=http://localhost:8000/api/v1" > .env
 npm start
 Frontend runs at: http://localhost:3000
 
-### Quick Start Commands Summary
+# Quick Start Commands Summary
 
 Terminal 1 - Backend:
 cd Phase2
-# Activate virtual environment
-# Windows: venv\Scripts\activate
-# Mac/Linux: source venv/bin/activate
+Activate virtual environment
+Windows: venv\Scripts\activate
+Mac/Linux: source venv/bin/activate
 cd backend
 python manage.py runserver
 
@@ -143,7 +144,7 @@ Terminal 2 - Frontend:
 cd frontend
 npm start
 
-### Access the Application
+# Access the Application
 
 Frontend App: http://localhost:3000
 Backend API: http://localhost:8000/api/v1
@@ -152,11 +153,11 @@ ReDoc Documentation: http://localhost:8000/redoc/
 
 ## User Roles
 
-The system defines three primary user roles: Admin, Writer, and Reader. Additionally, within each group chat, a Group Admin role exists for managing specific chat rooms.
-**Admin**: The admin is responsible for monitoring the entire platform. An admin can approve or reject books that writers upload, view and process password reset requests, delete inappropriate posts or comments, deletgroupchats, and view all users and transactions. However, an admin cannot create posts, upload books, or join or create group chats. To test the admin role, use username `alex_wright` with password `Adm!n@2023`.
-**Writer**: A writer can upload books which require admin approval before becoming visible on our platform, create notebooks to organize their writings, post writings inside their notebooks, create regular text or image posts (single image allowed), purchase books and view them in their personal library, and view their personal analytics dashboard showing graphs of book sales, revenue, and engagement's summarized analysis. Writers can also follow or unfollow other users, buy coins using simulated payment, purchase books to read, and join or leave (if joined) an existing group chats and send messages. Writers cannot create group chats or approve books. To test the writer role, use username `maya_stone` with password `Myst!c99xA`.
-**Reader**: A reader can create regular posts, create group chats and link them to specific writers so fans can easily find communities around their favorite authors, join or leave group chats, send messages in group chats, buy coins, purchase books, follow or unfollow writers and other users, view purchased books in their personal library, and like or comment on posts. Readers cannot upload books, create notebooks, or view analytics dashboards. To test the reader role, use username `sara_hill` with password `Sara@H123`.
-**Group Admin** – Within any group chat, the creator becomes the group admin.
+The system defines three primary user roles: Admin, Writer, and Reader. Additionally, within each group chat, a Group Admin role exists for managing specific group chats.
+**Admin**: The admin is responsible for monitoring the entire platform. An admin can approve or reject books that writers upload, view and process password reset requests, delete inappropriate posts or comments, delete groupchats, and view all users and transactions. However, an admin cannot create posts, upload books, or join or create group chats.
+**Writer**: A writer can upload books which require admin approval before becoming visible on our platform, create notebooks to organize their writings, post writings inside their notebooks, create regular text or image posts (single image allowed), purchase books and view them in their personal library, and view their personal analytics dashboard showing graphs of book sales, revenue, and engagement's summarized analysis. Writers can also follow or unfollow other users, buy coins using simulated payment, purchase books to read, and join or leave (if joined) an existing group-chat and send messages. Writers cannot create group chats or approve books.
+**Reader**: A reader can create posts, create group chats and link them to specific writers so fans can easily find communities around their favorite authors, join or leave group chats, send messages in group chats, buy coins, purchase books, follow or unfollow writers and other users, view purchased books in their personal library, and like or comment on posts. Readers cannot upload books, create notebooks, or view analytics dashboards. To test the reader role, use username `sara_hill` with password `Sara@H123`.
+**Group Admin**: Within any group chat, the creator becomes the group admin.
 
 ## Feature Walkthrough
 
@@ -176,10 +177,10 @@ Users can like/unlike posts and add comments. They can also edit or delete their
 Users can follow or unfollow anyone, whether they are writers or readers. This happens on a user’s profile page using `POST /users/{id}/follow`.
 
 **Profile Page**  
-Users can view other users’ profiles, showing username, bio, profile picture, role, join date, and follower/following counts. Clicking followers/following shows a list of those users. Writers have extra tabs for Books, Notebooks, and Group Chats. This uses `/profile/{id}` and `GET /users/{id}`.
+Users can view other users’ profiles, showing username, bio, role, join date, and follower/following counts. Clicking followers/following shows a list of those users. Writers have extra tabs for Books, Notebooks, and Group Chats. This uses `/profile/{id}` and `GET /users/{id}`.
 
 **Edit Profile**  
-Users can edit their own bio and profile picture via `/profile/edit` using `PUT /users/profile`.
+Users can edit their own bio etc via `/profile/edit` using `PUT /users/profile`.
 
 **Books Search**  
 Users can search for approved books by title keyword. Results show the cover, title, author, price, and a short description. This is on `/search` under the "Books" tab using `GET /books?search=`.
@@ -244,7 +245,7 @@ We use MySQL’s InnoDB engine, which writes all committed transactions to the r
 
 ## 10. Indexing & Performance
 
-### Indexes Created in the Database
+# Indexes Created in the Database
 
 | Index Name        | Table        | Column(s)         | Purpose                                               |
 | `u_name`          | users        | username          | Speeds up login and profile lookup by username        |
@@ -285,46 +286,65 @@ We use MySQL’s InnoDB engine, which writes all committed transactions to the r
 
 ## 11. API Reference
 
-| Method | Route                                       |AuthRequired| Purpose                                       |
-| POST   | /auth/register                              | No         | Register a new user                           |
-| POST   | /auth/login                                 | No         | Login with username or email                  |
-| POST   | /auth/logout                                | Yes        | Logout and blacklist refresh token            |
-| GET    | /users/profile                              | Yes        | Get current user's profile                    |
-| PUT    | /users/profile                              | Yes        | Update current user's bio or profile picture  |
-| GET    | /users/{id}                                 | No         | Get public profile of any user                |
-| POST   | /users/{id}/follow                          | Yes        | Follow or unfollow a user                     |
-| GET    | /users/{id}/followers                       | No         | Get list of users following this user         |
-| GET    | /users/{id}/following                       | No         | Get list of users this user follows           |
-| GET    | /users/search/                              | No         | Search users by username                      |
-| GET    | /posts                                      | No         | Get  posts feed (all posts or filtered)       |
-| POST   | /posts                                      | Yes        | Create a new post (text or image)             |
-| GET    | /posts/{id}                                 | No         | Get details of a single post                  |
-| PUT    | /posts/{id}                                 | Yes        | Update own post                               |
-| DELETE | /posts/{id}                                 | Yes        | Delete own post                               |
-| POST   | /posts/{id}/like                            | Yes        | Like or unlike a post                         |
-| GET    | /posts/{id}/likes                           | No         | Get list of users who liked a post            |
-| POST   | /posts/{id}/comments                        | Yes        | Add a comment to a post                       |
-| GET    | /posts/{id}/comments/list                   | No         | Get all comments for a post                   |
-| PUT    | /comments/{id}                              | Yes        | Update own comment                            |
-| DELETE | /comments/{id}/delete                       | Yes        | Delete own comment                            |
-| GET    | /books                                      | No         | List all approved books                       |
-| GET    | /books/{id}                                 | No         | Get details of a specific book                |
-| POST   | /books/{id}/purchase                        | Yes        | Purchase a book using coins                   |
-| GET    | /wallet                                     | Yes        | Get current user's coin balance               |
-| GET    | /wallet/transactions                        | Yes        | Get user's transaction history                |
-| POST   | /wallet/buy-coins/                          | Yes        | Purchase coins (simulated payment)            |
-| GET    | /notebooks/{id}                             | No         | Get details of a notebook                     |
-| GET    | /notebooks/{id}/posts/                      | No         | Get all writings inside a notebook            |
-| GET    | /groupchats/my/                             | Yes        | Get all groups user is a member of            |
-| POST   | /groupchats/create/                         | Yes        | Create a new group linked to a writer         |
-| POST   | /groupchats/{id}/join/                      | Yes        | Join an existing group                        |
-| POST   | /groupchats/{id}/leave/                     | Yes        | Leave a group                                 |
-| GET    | /groupchats/{id}/messages/                  | Yes        | Get all messages in a group                   |
-| POST   | /groupchats/{id}/messages/                  | Yes        | Send a message to a group                     |
-| GET    | /admin/books/pending                        | Admin only | Get list of books awaiting approval           |
-| POST   | /admin/books/{id}/approve                   | Admin only | Approve a pending book                        |
-| GET    | /admin/password-reset-requests              | Admin only | Get list of password reset requests           |
-| POST   | /admin/password-reset-requests/{id}/process | Admin only | Mark a reset request as processed             |
+| Method | Route                                       | Auth Required | Purpose |
+| POST   | /auth/register                              | No | Register a new user |
+| POST   | /auth/login                                 | No | Login with username or email |
+| POST   | /auth/logout/                               | Yes | Logout and invalidate refresh token |
+| POST   | /auth/forgot-password                       | No | Request a password reset |
+| POST   | /auth/reset-password                        | No | Reset password with token |
+| POST   | /auth/refresh                               | No | Refresh access token |
+| GET    | /users/profile                              | Yes | Get current user's profile |
+| PUT    | /users/profile                              | Yes | Update bio or profile picture |
+| GET    | /users/{id}                                 | No | Get public profile of any user |
+| POST   | /users/{id}/follow                          | Yes | Follow or unfollow a user |
+| GET    | /users/{id}/followers                       | No | Get followers list |
+| GET    | /users/{id}/following                       | No | Get following list |
+| GET    | /users/{id}/posts/                          | No | Get posts by a specific user |
+| GET    | /users/search/                              | No | Search users by username |
+| GET    | /posts/                                     | No | Get all posts (paginated) |
+| POST   | /posts/                                     | Yes | Create a new post |
+| GET    | /posts/{id}/                                | No | Get a single post |
+| PUT    | /posts/{id}/                                | Yes (owner) | Update own post |
+| DELETE | /posts/{id}/                                | Yes (owner or admin) | Delete a post |
+| POST   | /posts/{id}/like/                           | Yes | Like or unlike a post |
+| GET    | /posts/{id}/likes/                          | No | Get likes for a post |
+| POST   | /posts/{id}/comments/                       | Yes | Add a comment |
+| GET    | /posts/{id}/comments/list/                  | No | Get all comments for a post |
+| PUT    | /comments/{id}/                             | Yes (owner) | Update own comment |
+| DELETE | /comments/{id}/delete/                      | Yes (owner) | Delete own comment |
+| GET    | /posts/feed/following/                      | Yes | Get posts from followed users |
+| GET    | /posts/notebooks/{id}/posts/                | No | Get all writings in a notebook |
+| GET    | /books/                                     | No | List all approved books |
+| POST   | /books/                                     | Writer | Upload a new book |
+| GET    | /books/{id}/                                | No | Get book details |
+| POST   | /books/{id}/purchase/                       | Yes | Purchase a book with coins |
+| GET    | /books/writer/{id}/                         | No | Get books by a specific writer |
+| GET    | /books/admin/pending/                       | Admin | List pending books |
+| GET    | /books/admin/approved/                      | Admin | List approved books |
+| POST   | /books/admin/{id}/approve/                  | Admin | Approve a book |
+| POST   | /books/admin/{id}/reject/                   | Admin | Reject a book |
+| GET    | /wallet                                     | Yes | Get coin balance |
+| GET    | /wallet/transactions                        | Yes | Get book purchase transaction history |
+| GET    | /wallet/coin-purchases                      | Yes | Get coin purchase history |
+| POST   | /wallet/buy-coins/                          | Yes | Purchase coins (simulated) |
+| GET    | /notebooks/{id}/                            | No | Get notebook details |
+| POST   | /notebooks/                                 | Writer | Create a notebook |
+| GET    | /notebooks/writer/{id}/                     | No | Get notebooks by a writer |
+| POST   | /notebooks/{id}/posts/                      | Writer | Post a writing inside a notebook |
+| GET    | /groupchats/                                | No | List all group chats |
+| GET    | /groupchats/my/                             | Yes | Get user's joined groups |
+| POST   | /groupchats/create/                         | User | Create a group chat |
+| GET    | /groupchats/{id}/                           | No | Get group details |
+| POST   | /groupchats/{id}/join/                      | Yes | Join a group |
+| DELETE | /groupchats/{id}/remove/{user_id}/          | Yes | Leave or remove from group |
+| POST   | /groupchats/{id}/leave/                     | Yes | Leave a group |
+| GET    | /groupchats/{id}/messages/                  | Yes (member) | Get group messages |
+| POST   | /groupchats/{id}/send/                      | Yes (member) | Send a message in a group |
+| GET    | /groupchats/{id}/members/                   | Yes | Get group members |
+| GET    | /groupchats/writers/{writer_id}/            | No | Get groups linked to a writer |
+| DELETE | /groupchats/messages/{message_id}/delete/   | Yes (owner) | Delete own message |
+| GET    | /admin/password-reset-requests              | Admin | List password reset requests |
+| POST   | /admin/password-reset-requests/{id}/process | Admin | Approve or reject a reset request |
 
 ## Known Issues & Limitations: 
-None
+We were unable to do the image uploading aspect using blob and as the deadline reached we thought that it was for the best to stick with what we were sticking to from the very beginning and that is by uploading the url of an image.
