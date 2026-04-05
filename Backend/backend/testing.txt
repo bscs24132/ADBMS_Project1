@@ -1,0 +1,37 @@
+Admin:
+        "id": 111,
+        "username": "test_admin1",
+        "email": "testadmin1@gmail.com",
+ "password": "Test@1234",
+"access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzM5MDY1LCJpYXQiOjE3NzMzMzU0NjUsImp0aSI6IjM3NzNmOWQxNDA4ZDQ3ZjQ4MTViODExMzE5YTI0NmIyIiwidXNlcl9pZCI6MTExLCJ1c2VybmFtZSI6InRlc3RfYWRtaW4xIiwicm9sZSI6ImFkbWluIn0.BDo5gyTO2fJMp0OWmxiy_uaQum5iqN8895W4Zh2fCtU",
+
+
+Writer:
+ "id": 112,
+        "username": "test_writer2",
+        "email": "testwriter2@gmail.com",
+ "password": "Test@1234",
+ "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzM5MTYxLCJpYXQiOjE3NzMzMzU1NjEsImp0aSI6IjRkODMyNjUxODNjNTQzODZhMjkzMTQ2OTg1MjBlM2IyIiwidXNlcl9pZCI6MTEyLCJ1c2VybmFtZSI6InRlc3Rfd3JpdGVyMiIsInJvbGUiOiJ3cml0ZXIifQ.7pV2LsOAMC6JMCkORAs-Ia5I6ZNkT6SxQ38tDouiqVQ",
+
+
+User1:
+ "id": 113,
+        "username": "test_user1",
+        "email": "testuser1@gmail.com",
+ "password": "Test@1234",
+"access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzM5MjY2LCJpYXQiOjE3NzMzMzU2NjYsImp0aSI6ImM2ODc3N2QxNWUxYzRhMzQ5ZjA5YTAzYzIxOTgwYzU0IiwidXNlcl9pZCI6MTEzLCJ1c2VybmFtZSI6InRlc3RfdXNlcjEiLCJyb2xlIjoidXNlciJ9.HGiUgkDHSlY55gY5tR2uH7sj9Eh1pg2RSCJJcmDs8yM"
+
+User2:
+"id": 114,
+        "username": "test_user2",
+        "email": "testuser2@gmail.com",
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzM5MzM0LCJpYXQiOjE3NzMzMzU3MzQsImp0aSI6Ijk4MTQxZWUxNDVmYzQwMTY4NjMwYjg2Y2IyODY0ZjY2IiwidXNlcl9pZCI6MTE0LCJ1c2VybmFtZSI6InRlc3RfdXNlcjIiLCJyb2xlIjoidXNlciJ9.37oEHZ040Df-5hv5rLRWu2gzmOQwzV2DvnPQe9h7230",
+
+
+User3:
+"id": 115,
+        "username": "test_user3",
+        "email": "testuser3@gmail.com",
+"password": "Test@1234",
+ "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzM5MzgyLCJpYXQiOjE3NzMzMzU3ODIsImp0aSI6IjYxZmUzZTI0NjcwMzRkNTY4MTRmNWRkZmMwODE3YjhjIiwidXNlcl9pZCI6MTE1LCJ1c2VybmFtZSI6InRlc3RfdXNlcjMiLCJyb2xlIjoidXNlciJ9.K7evHKr_1DvWMsfzNu_Kye_oUNMPSLSmHR5FBzMKVlM"
+
