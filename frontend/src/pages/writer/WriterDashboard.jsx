@@ -6,6 +6,7 @@ import {
     DialogActions, CircularProgress, Chip, Paper,
     Tab, Tabs, Alert, MenuItem,
 } from '@mui/material';
+import CreatePostDialog from '../../components/Dialogs/CreatePostDialog';
 import AddIcon from '@mui/icons-material/Add';
 import BookIcon from '@mui/icons-material/MenuBook';
 import EditIcon from '@mui/icons-material/Edit';
@@ -40,17 +41,18 @@ const WriterDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-
-    const [postDialog, setPostDialog] = useState(false);
+    
+    // Dialog states
+    const [postDialogOpen, setPostDialogOpen] = useState(false);
     const [bookDialog, setBookDialog] = useState(false);
     const [notebookDialog, setNotebookDialog] = useState(false);
     const [writingDialog, setWritingDialog] = useState(false);
     const [selectedNotebook, setSelectedNotebook] = useState(null);
 
-    const [postContent, setPostContent] = useState('');
     const [bookForm, setBookForm] = useState({ title: '', description: '', content: '', coin_price: 0, cover_image: '' });
     const [notebookForm, setNotebookForm] = useState({ title: '', description: '' });
     const [writingContent, setWritingContent] = useState('');
+    const [writingImageUrl, setWritingImageUrl] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [totalLikes, setTotalLikes] = useState(0);
     const [totalComments, setTotalComments] = useState(0);
@@ -113,20 +115,9 @@ const WriterDashboard = () => {
         setTimeout(() => setSuccess(''), 3000);
     };
 
-    const handleCreatePost = async () => {
-        if (!postContent.trim()) return;
-        setSubmitting(true);
-        try {
-            await api.post('/posts/', { content: postContent });
-            setPostContent('');
-            setPostDialog(false);
-            showSuccess('Post created successfully!');
-            fetchAllData();
-        } catch (err) {
-            setError(err.response?.data?.error || 'Failed to create post');
-        } finally {
-            setSubmitting(false);
-        }
+    const refreshPosts = () => {
+        fetchAllData();
+        showSuccess('Post created successfully!');
     };
 
     const handleUploadBook = async () => {
@@ -165,11 +156,16 @@ const WriterDashboard = () => {
         if (!writingContent.trim() || !selectedNotebook) return;
         setSubmitting(true);
         try {
-            await api.post(`/notebooks/${selectedNotebook.id}/posts`, { content: writingContent });
+            await api.post(`/notebooks/${selectedNotebook.id}/posts`, { 
+                content: writingContent,
+                image: writingImageUrl || null
+            });
             setWritingContent('');
+            setWritingImageUrl('');
             setWritingDialog(false);
             setSelectedNotebook(null);
             showSuccess('Writing posted to notebook!');
+            fetchAllData();
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to post writing');
         } finally {
@@ -244,7 +240,7 @@ const WriterDashboard = () => {
                     {/* Action Buttons */}
                     <Grid container spacing={2} sx={{ mb: 4 }}>
                         <Grid item>
-                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setPostDialog(true)}>New Post</Button>
+                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setPostDialogOpen(true)}>New Post</Button>
                         </Grid>
                         <Grid item>
                             <Button variant="contained" color="success" startIcon={<AddIcon />} onClick={() => setBookDialog(true)}>Upload Book</Button>
@@ -277,7 +273,7 @@ const WriterDashboard = () => {
                         posts.length === 0 ? (
                             <Paper sx={{ p: 4, textAlign: 'center' }}>
                                 <Typography color="text.secondary">No posts yet.</Typography>
-                                <Button variant="contained" sx={{ mt: 2 }} onClick={() => setPostDialog(true)}>Create Post</Button>
+                                <Button variant="contained" sx={{ mt: 2 }} onClick={() => setPostDialogOpen(true)}>Create Post</Button>
                             </Paper>
                         ) : (
                             <Grid container spacing={2}>
@@ -286,6 +282,14 @@ const WriterDashboard = () => {
                                         <Card sx={{ borderRadius: 2 }}>
                                             <CardContent>
                                                 <Typography variant="body1">{post.content}</Typography>
+                                                {post.image && (
+                                                    <Box 
+                                                        component="img" 
+                                                        src={post.image} 
+                                                        sx={{ mt: 2, maxWidth: '100%', borderRadius: 2 }} 
+                                                        alt="post"
+                                                    />
+                                                )}
                                                 <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                                                     {new Date(post.created_at).toLocaleString()}
                                                 </Typography>
@@ -309,6 +313,14 @@ const WriterDashboard = () => {
                                 {books.map(book => (
                                     <Grid item xs={12} sm={6} md={4} key={book.id}>
                                         <Card sx={{ borderRadius: 2, height: '100%' }}>
+                                            {book.cover_image && (
+                                                <Box 
+                                                    component="img" 
+                                                    src={book.cover_image} 
+                                                    sx={{ height: 140, objectFit: 'cover', width: '100%', borderTopLeftRadius: 8, borderTopRightRadius: 8 }} 
+                                                    alt={book.title}
+                                                />
+                                            )}
                                             <CardContent>
                                                 <Typography variant="h6" noWrap>{book.title}</Typography>
                                                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
@@ -484,20 +496,12 @@ const WriterDashboard = () => {
                 </Box>
             </Container>
 
-            {/* Create Post Dialog */}
-            <Dialog open={postDialog} onClose={() => setPostDialog(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Create New Post</DialogTitle>
-                <DialogContent>
-                    <TextField fullWidth multiline rows={4} label="What's on your mind?" value={postContent}
-                        onChange={(e) => setPostContent(e.target.value)} sx={{ mt: 1 }} />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setPostDialog(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleCreatePost} disabled={submitting || !postContent.trim()}>
-                        {submitting ? <CircularProgress size={20} /> : 'Post'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            {/* Create Post Dialog - Using Component */}
+            <CreatePostDialog
+                open={postDialogOpen}
+                onClose={() => setPostDialogOpen(false)}
+                onPostCreated={refreshPosts}
+            />
 
             {/* Upload Book Dialog */}
             <Dialog open={bookDialog} onClose={() => setBookDialog(false)} maxWidth="sm" fullWidth>
@@ -544,7 +548,10 @@ const WriterDashboard = () => {
                         </TextField>
                     )}
                     <TextField fullWidth multiline rows={5} label="Your writing..." value={writingContent}
-                        onChange={(e) => setWritingContent(e.target.value)} />
+                        onChange={(e) => setWritingContent(e.target.value)} sx={{ mb: 2 }} />
+                    <TextField fullWidth label="Image URL (optional)" value={writingImageUrl}
+                        onChange={(e) => setWritingImageUrl(e.target.value)} sx={{ mb: 2 }}
+                        placeholder="https://example.com/image.jpg" />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setWritingDialog(false)}>Cancel</Button>

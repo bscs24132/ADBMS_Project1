@@ -6,7 +6,7 @@ create table users (
     password varchar(255) not null,
     bio text,
     email varchar(255) unique,
-    profile_picture varchar(255),
+    profile_picture varchar(500),
     date_joined datetime default current_timestamp,
     role enum('user','writer','admin') not null
 );
@@ -47,7 +47,7 @@ create table books (
     content text,
     author_id int not null,
     coin_price int default 0,
-    cover_image varchar(255),
+    cover_image varchar(500),
     is_approved boolean default false,
     created_at datetime default current_timestamp,
     foreign key (author_id) references users(id)
@@ -59,7 +59,7 @@ create table posts (
     notebook_id int null,
     author_id int not null,
     content text,
-    image varchar(255),
+    image varchar(500),
     created_at datetime default current_timestamp,
     foreign key (author_id) references users(id)
         on delete cascade,
